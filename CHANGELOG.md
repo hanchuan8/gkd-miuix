@@ -8,7 +8,10 @@
 - 触发记录页适配 MIUIX 样式与字体色
 - 订阅页取消下拉刷新，顶栏增加刷新按钮
 - 触发提示支持实时通知，并可自定义存在时间
-- Debug 构建不再给应用名追加 `-debug` 字样
+
+## 开源致谢
+
+本分支基于 [GKD](https://github.com/gkd-kit/gkd)，界面依托 [compose-miuix-ui](https://github.com/compose-miuix-ui/miuix)（MIUIX UI / Preference / Icons / Blur）等开源项目，详见仓库 README。
 
 ## 更新方式
 

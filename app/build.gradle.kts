@@ -128,7 +128,6 @@ android {
             signingConfig = gkdSigningConfig
             applicationIdSuffix = ".debug"
             resValue("color", "better_black", "#FF5D92")
-            // 不再给应用名/快捷方式追加 -debug 字样
         }
     }
     productFlavors {

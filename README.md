@@ -33,12 +33,6 @@
 ./gradlew :app:assembleGkdRelease
 ```
 
-Debug 包：
-
-```bash
-./gradlew :app:assembleGkdDebug
-```
-
 如遇规则 / 选择器问题，可先查阅上游 [疑难解答](https://gkd.li/guide/faq)。
 
 ## 主要改动（相对上游）
@@ -47,7 +41,26 @@ Debug 包：
 - 首页、设置等使用 Preference 分组布局
 - 触发提示支持悬浮窗 / Toast / 实时通知等样式
 - 订阅页改为顶栏刷新（取消下拉刷新）
-- Debug 包不再追加应用名 `-debug` 后缀
+
+## 开源致谢
+
+本项目在 [GKD](https://github.com/gkd-kit/gkd)（GPL-3.0）基础上开发，并使用了下列开源项目（不完全列表）：
+
+| 项目 | 说明 | 链接 |
+| ---- | ---- | ---- |
+| **compose-miuix-ui** | MIUIX 风格 Compose 组件 / Preference / Icons / Blur | [compose-miuix-ui/miuix](https://github.com/compose-miuix-ui/miuix) |
+| **GKD** | 核心自动化、选择器与订阅能力 | [gkd-kit/gkd](https://github.com/gkd-kit/gkd) |
+| Jetpack Compose | UI 框架 | [androidx/compose](https://developer.android.com/jetpack/compose) |
+| AndroidX / Room | 应用基础组件与本地数据库 | [AndroidX](https://developer.android.com/jetpack) |
+| Ktor | 网络请求 | [ktorio/ktor](https://github.com/ktorio/ktor) |
+| Shizuku | 特权 API 调用 | [RikkaApps/Shizuku](https://github.com/RikkaApps/Shizuku) |
+| XXPermissions | 权限请求 | [getActivity/XXPermissions](https://github.com/getActivity/XXPermissions) |
+| Toaster | Toast | [getActivity/Toaster](https://github.com/getActivity/Toaster) |
+| DeviceCompat | 设备兼容 | [getActivity/DeviceCompat](https://github.com/getActivity/DeviceCompat) |
+| compose-webview | WebView | [KevinnZou/compose-webview](https://github.com/KevinnZou/compose-webview) |
+| reorderable | 列表拖拽排序 | [Calvin-LL/Reorderable](https://github.com/Calvin-LL/Reorderable) |
+
+完整依赖与版本见 [`gradle/libs.versions.toml`](gradle/libs.versions.toml)。各自许可证以原项目为准。
 
 ## 订阅
 
