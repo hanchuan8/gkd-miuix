@@ -3,8 +3,6 @@ package li.songe.gkd.ui.component
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationConstants.DefaultDurationMillis
 import androidx.compose.animation.core.tween
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -20,6 +18,8 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import li.songe.gkd.util.throttle
+import top.yukonga.miuix.kmp.basic.FloatingActionButton
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 private const val elevationDurationMillis = 50
 
@@ -36,7 +36,6 @@ fun AnimationFloatingActionButton(
     val maxTranslationX = remember(density.density) { density.run { 24.dp.toPx() } }
     var innerVisible by remember { mutableStateOf(visible) }
     val percent = remember { Animatable(if (visible) 1f else 0f) }
-    // https://stackoverflow.com/questions/75717579
     val defaultElevation = remember { Animatable(if (visible) 1f else 0f) }
     LaunchedEffect(visible) {
         if (visible != innerVisible) {
@@ -64,25 +63,30 @@ fun AnimationFloatingActionButton(
         }
     }
     if (innerVisible) {
+        val fabModifier = modifier
+            .graphicsLayer(
+                alpha = percent.value,
+                translationX = (1f - percent.value) * maxTranslationX
+            )
+            .semantics {
+                if (contentDescription != null) {
+                    this.contentDescription = contentDescription
+                }
+                if (onClickLabel != null) {
+                    this.onClick(label = onClickLabel, action = null)
+                }
+            }
         TooltipIconButtonBox(contentDescription) {
             FloatingActionButton(
-                modifier = modifier
-                    .graphicsLayer(
-                        alpha = percent.value,
-                        translationX = (1f - percent.value) * maxTranslationX
-                    )
-                    .semantics {
-                        if (contentDescription != null) {
-                            this.contentDescription = contentDescription
-                        }
-                        if (onClickLabel != null) {
-                            this.onClick(label = onClickLabel, action = null)
-                        }
-                    },
-                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = (defaultElevation.value * 6f).dp),
+                modifier = fabModifier,
+                shadowElevation = (defaultElevation.value * 6f).dp,
                 onClick = throttle(onClick),
                 content = {
-                    PerfIcon(imageVector = imageVector, contentDescription = null)
+                    PerfIcon(
+                        imageVector = imageVector,
+                        contentDescription = null,
+                        tint = MiuixTheme.colorScheme.onPrimary,
+                    )
                 },
             )
         }

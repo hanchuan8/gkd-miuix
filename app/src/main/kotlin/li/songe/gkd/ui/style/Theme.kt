@@ -8,8 +8,6 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -32,7 +30,10 @@ import li.songe.gkd.app
 import li.songe.gkd.store.storeFlow
 import li.songe.gkd.ui.share.LocalDarkTheme
 import li.songe.gkd.ui.share.LocalIsTalkbackEnabled
-import li.songe.gkd.util.AndroidTarget
+import top.yukonga.miuix.kmp.theme.ColorSchemeMode
+import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.theme.ThemeController
+import top.yukonga.miuix.kmp.theme.Colors as MiuixColors
 
 private val LightColorScheme = lightColorScheme()
 private val DarkColorScheme = darkColorScheme()
@@ -59,26 +60,6 @@ fun AppTheme(
     val darkTheme = (enableDarkTheme ?: systemInDarkTheme).let {
         if (invertedTheme) !it else it
     }
-    val colorScheme = when {
-        AndroidTarget.S && enableDynamicColor && darkTheme -> dynamicDarkColorScheme(app)
-        AndroidTarget.S && enableDynamicColor && !darkTheme -> dynamicLightColorScheme(app)
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
-
-    val activity = LocalActivity.current
-    if (activity != null) {
-        LaunchedEffect(darkTheme) {
-            // https://github.com/gkd-kit/gkd/pull/421
-            WindowInsetsControllerCompat(activity.window, activity.window.decorView).apply {
-                isAppearanceLightStatusBars = !darkTheme
-            }
-        }
-        val bg = colorScheme.background.toArgb()
-        LaunchedEffect(darkTheme, bg) {
-            activity.window.decorView.setBackgroundColor(bg)
-        }
-    }
 
     var isTalkbackEnabled by remember { mutableStateOf(app.a11yManager.isTouchExplorationEnabled) }
     DisposableEffect(null) {
@@ -90,15 +71,79 @@ fun AppTheme(
             app.a11yManager.removeTouchExplorationStateChangeListener(listener)
         }
     }
+
+    val colorSchemeMode = when {
+        enableDynamicColor && darkTheme -> ColorSchemeMode.MonetDark
+        enableDynamicColor && !darkTheme -> ColorSchemeMode.MonetLight
+        darkTheme -> ColorSchemeMode.Dark
+        else -> ColorSchemeMode.Light
+    }
+    val controller = remember(colorSchemeMode) {
+        ThemeController(colorSchemeMode = colorSchemeMode)
+    }
+
     CompositionLocalProvider(
         LocalDarkTheme provides darkTheme,
-        LocalIsTalkbackEnabled provides isTalkbackEnabled
+        LocalIsTalkbackEnabled provides isTalkbackEnabled,
     ) {
-        MaterialTheme(
-            colorScheme = colorScheme.animation(),
-            content = content,
-        )
+        MiuixTheme(controller = controller) {
+            // 桥接一层 Material ColorScheme，兼容尚未换完的 Material 组件 API
+            val materialScheme = MiuixTheme.colorScheme
+                .toMaterialColorScheme(darkTheme)
+                .animation()
+            ApplyWindowChrome(darkTheme = darkTheme, background = materialScheme.background)
+            MaterialTheme(
+                colorScheme = materialScheme,
+                content = content,
+            )
+        }
     }
+}
+
+@Composable
+private fun ApplyWindowChrome(darkTheme: Boolean, background: Color) {
+    val activity = LocalActivity.current
+    if (activity != null) {
+        LaunchedEffect(darkTheme) {
+            WindowInsetsControllerCompat(activity.window, activity.window.decorView).apply {
+                isAppearanceLightStatusBars = !darkTheme
+            }
+        }
+        val bg = background.toArgb()
+        LaunchedEffect(darkTheme, bg) {
+            activity.window.decorView.setBackgroundColor(bg)
+        }
+    }
+}
+
+fun MiuixColors.toMaterialColorScheme(darkTheme: Boolean): ColorScheme {
+    val base = if (darkTheme) DarkColorScheme else LightColorScheme
+    return base.copy(
+        primary = primary,
+        onPrimary = onPrimary,
+        primaryContainer = primaryContainer,
+        onPrimaryContainer = onPrimaryContainer,
+        secondary = secondary,
+        onSecondary = onSecondary,
+        secondaryContainer = secondaryContainer,
+        onSecondaryContainer = onSecondaryContainer,
+        tertiaryContainer = tertiaryContainer,
+        onTertiaryContainer = onTertiaryContainer,
+        background = background,
+        onBackground = onBackground,
+        surface = surface,
+        onSurface = onSurface,
+        surfaceVariant = surfaceVariant,
+        onSurfaceVariant = onSurfaceVariantSummary,
+        error = error,
+        onError = onError,
+        errorContainer = errorContainer,
+        onErrorContainer = onErrorContainer,
+        outline = outline,
+        surfaceContainer = surfaceContainer,
+        surfaceContainerHigh = surfaceContainerHigh,
+        surfaceContainerHighest = surfaceContainerHighest,
+    )
 }
 
 @Composable

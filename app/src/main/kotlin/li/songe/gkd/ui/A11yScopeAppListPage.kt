@@ -9,10 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import li.songe.gkd.ui.component.PerfDropdownMenu
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -52,7 +49,6 @@ import li.songe.gkd.ui.icon.BackCloseIcon
 import li.songe.gkd.ui.share.ListPlaceholder
 import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.ui.share.asMutableState
-import li.songe.gkd.ui.share.noRippleClickable
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.scaffoldPadding
 import li.songe.gkd.util.AppGroupOption
@@ -62,6 +58,9 @@ import li.songe.gkd.util.launchAsFn
 import li.songe.gkd.util.switchItem
 import li.songe.gkd.util.throttle
 import li.songe.gkd.util.toast
+import top.yukonga.miuix.kmp.basic.IconButton
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.Scaffold
 
 @Serializable
 data object A11YScopeAppListRoute : NavKey
@@ -76,7 +75,8 @@ fun A11yScopeAppListPage() {
     val searchStr by vm.searchStrFlow.collectAsState()
     var showSearchBar by vm.showSearchBarFlow.asMutableState()
     var editable by vm.editableFlow.asMutableState()
-    val (scrollBehavior, listState) = useListScrollState(vm.resetKey, canScroll = { !editable })
+    val listState = useListScrollState(vm.resetKey, canScroll = { !editable })
+    val miuixScrollBehavior = MiuixScrollBehavior()
     BackHandler(editable, vm.viewModelScope.launchAsFn {
         context.justHideSoftInput()
         if (vm.textChanged) {
@@ -88,10 +88,19 @@ fun A11yScopeAppListPage() {
         editable = false
     })
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = Modifier.nestedScroll(miuixScrollBehavior.nestedScrollConnection),
         topBar = {
+            if (showSearchBar) {
+                BackHandler {
+                    if (!context.justHideSoftInput()) {
+                        showSearchBar = false
+                    }
+                }
+            }
+            val firstShowSearchBar = remember { showSearchBar }
             PerfTopAppBar(
-                scrollBehavior = scrollBehavior,
+                titleText = if (showSearchBar) "" else "局部无障碍",
+                miuixScrollBehavior = miuixScrollBehavior,
                 canScroll = !editable && !store.blockA11yAppListFollowMatch,
                 navigationIcon = {
                     IconButton(
@@ -114,14 +123,8 @@ fun A11yScopeAppListPage() {
                         BackCloseIcon(backOrClose = !editable)
                     }
                 },
-                title = {
-                    val firstShowSearchBar = remember { showSearchBar }
+                bottomContent = {
                     if (showSearchBar) {
-                        BackHandler {
-                            if (!context.justHideSoftInput()) {
-                                showSearchBar = false
-                            }
-                        }
                         AppBarTextField(
                             value = searchStr,
                             onValueChange = { newValue ->
@@ -129,17 +132,6 @@ fun A11yScopeAppListPage() {
                             },
                             hint = "请输入应用名称/ID",
                             modifier = if (firstShowSearchBar) Modifier else Modifier.autoFocus(),
-                        )
-                    } else {
-                        val titleModifier = Modifier
-                            .noRippleClickable(
-                                onClick = throttle {
-                                    vm.resetKey.intValue++
-                                }
-                            )
-                        Text(
-                            modifier = titleModifier,
-                            text = "局部无障碍",
                         )
                     }
                 },
@@ -188,7 +180,7 @@ fun A11yScopeAppListPage() {
                                     modifier = Modifier
                                         .wrapContentSize(Alignment.TopStart)
                                 ) {
-                                    DropdownMenu(
+                                    PerfDropdownMenu(
                                         expanded = expanded,
                                         onDismissRequest = { expanded = false }
                                     ) {
@@ -223,7 +215,7 @@ fun A11yScopeAppListPage() {
         },
         floatingActionButton = {
             AnimationFloatingActionButton(
-                visible = !editable && scrollBehavior.isFullVisible,
+                visible = !editable && miuixScrollBehavior.isFullVisible,
                 onClickLabel = "进入文本编辑模式",
                 onClick = {
                     editable = !editable

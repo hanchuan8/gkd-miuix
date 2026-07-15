@@ -10,24 +10,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -37,19 +27,18 @@ import li.songe.gkd.appScope
 import li.songe.gkd.data.CategoryConfig
 import li.songe.gkd.data.RawSubscription
 import li.songe.gkd.db.DbSet
+import li.songe.gkd.ui.component.AnimationFloatingActionButton
+import li.songe.gkd.ui.component.AppPageScaffold
 import li.songe.gkd.ui.component.EmptyText
 import li.songe.gkd.ui.component.FullscreenDialog
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
-import li.songe.gkd.ui.component.PerfTopAppBar
 import li.songe.gkd.ui.component.PerfTriStateSwitch
-import li.songe.gkd.ui.component.TowLineText
 import li.songe.gkd.ui.component.autoFocus
 import li.songe.gkd.ui.component.updateDialogOptions
 import li.songe.gkd.ui.component.useListScrollState
 import li.songe.gkd.ui.share.ListPlaceholder
 import li.songe.gkd.ui.share.LocalMainViewModel
-import li.songe.gkd.ui.share.noRippleClickable
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.scaffoldPadding
 import li.songe.gkd.util.EnableGroupOption
@@ -59,6 +48,10 @@ import li.songe.gkd.util.launchAsFn
 import li.songe.gkd.util.throttle
 import li.songe.gkd.util.toast
 import li.songe.gkd.util.updateSubscription
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextField
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Serializable
 data class SubsCategoryRoute(val subsItemId: Long) : NavKey
@@ -73,21 +66,16 @@ fun SubsCategoryPage(@Suppress("unused") route: SubsCategoryRoute) {
 
     val categories = subs.categories
 
-    val scrollKey = rememberSaveable { mutableIntStateOf(0) }
-    val (scrollBehavior, listState) = useListScrollState(scrollKey)
-    Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection), topBar = {
-        PerfTopAppBar(scrollBehavior = scrollBehavior, navigationIcon = {
+    val listState = useListScrollState(categories.size)
+    AppPageScaffold(
+        title = "规则类别",
+        navigationIcon = {
             PerfIconButton(
                 imageVector = PerfIcon.ArrowBack,
                 onClick = mainVm::popPage,
             )
-        }, title = {
-            TowLineText(
-                title = subs.name,
-                subtitle = "规则类别",
-                modifier = Modifier.noRippleClickable(onClick = { scrollKey.intValue++ })
-            )
-        }, actions = {
+        },
+        actions = {
             PerfIconButton(imageVector = PerfIcon.Info, onClick = throttle {
                 mainVm.dialogFlow.updateDialogOptions(
                     title = "类别说明",
@@ -98,16 +86,16 @@ fun SubsCategoryPage(@Suppress("unused") route: SubsCategoryRoute) {
                     ).joinToString("\n\n"),
                 )
             })
-        })
-    }, floatingActionButton = {
-        if (subs.isLocal) {
-            FloatingActionButton(onClick = { vm.showAddCategoryFlow.value = true }) {
-                PerfIcon(
-                    imageVector = PerfIcon.Add,
-                )
-            }
-        }
-    }) { contentPadding ->
+        },
+        floatingActionButton = {
+            AnimationFloatingActionButton(
+                visible = subs.isLocal,
+                onClick = { vm.showAddCategoryFlow.value = true },
+                imageVector = PerfIcon.Add,
+                contentDescription = "添加类别",
+            )
+        },
+    ) { contentPadding ->
         LazyColumn(
             modifier = Modifier.scaffoldPadding(contentPadding),
             state = listState,
@@ -155,11 +143,9 @@ private fun CategoryItemCard(
                 )
             )
         },
-        shape = MaterialTheme.shapes.extraSmall,
         modifier = Modifier.padding(
             horizontal = 8.dp,
         ),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -172,20 +158,20 @@ private fun CategoryItemCard(
             ) {
                 Text(
                     text = category.name,
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MiuixTheme.textStyles.body1,
                 )
                 val desc = subs.getCategoryCompatDesc(category.key)
                 if (desc != null) {
                     Text(
                         text = desc,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MiuixTheme.textStyles.body2,
+                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                     )
                 } else {
                     Text(
                         text = "暂无规则",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        style = MiuixTheme.textStyles.body2,
+                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary.copy(alpha = 0.5f)
                     )
                 }
             }
@@ -258,23 +244,19 @@ fun UpsertCategoryDialog(
         }
     }
     FullscreenDialog(onDismissRequest = onDismissRequest) {
-        Scaffold(
-            topBar = {
-                PerfTopAppBar(
-                    navigationIcon = {
-                        PerfIconButton(
-                            imageVector = PerfIcon.Close,
-                            onClick = throttle(onDismissRequest),
-                        )
-                    },
-                    title = { Text(text = if (category == null) "添加类别" else "编辑类别") },
-                    actions = {
-                        PerfIconButton(
-                            imageVector = PerfIcon.Save,
-                            enabled = nameValue.isNotEmpty(),
-                            onClick = throttle(onClick),
-                        )
-                    }
+        AppPageScaffold(
+            title = if (category == null) "添加类别" else "编辑类别",
+            navigationIcon = {
+                PerfIconButton(
+                    imageVector = PerfIcon.Close,
+                    onClick = throttle(onDismissRequest),
+                )
+            },
+            actions = {
+                PerfIconButton(
+                    imageVector = PerfIcon.Save,
+                    enabled = nameValue.isNotEmpty(),
+                    onClick = throttle(onClick),
                 )
             },
         ) { paddingValues ->
@@ -283,23 +265,23 @@ fun UpsertCategoryDialog(
                     .padding(paddingValues)
                     .padding(horizontal = 16.dp),
             ) {
-                OutlinedTextField(
-                    label = { Text("类别名称") },
+                TextField(
                     value = nameValue,
                     onValueChange = { nameValue = it.trim() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .autoFocus(),
-                    placeholder = { Text(text = "请输入类别名称") },
+                    label = "请输入类别名称",
+                    useLabelAsPlaceholder = true,
                     singleLine = true,
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                OutlinedTextField(
-                    label = { Text("类别描述") },
+                TextField(
                     value = descValue,
                     onValueChange = { descValue = it.trim() },
                     modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text(text = "请输入类别描述") },
+                    label = "请输入类别描述",
+                    useLabelAsPlaceholder = true,
                     singleLine = true,
                 )
             }

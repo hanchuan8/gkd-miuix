@@ -2,10 +2,6 @@ package li.songe.gkd.ui.component
 
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -23,6 +19,10 @@ import li.songe.gkd.MainActivity
 import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.util.ShortUrlSet
 import li.songe.gkd.util.throttle
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextButton
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 
 @Composable
@@ -36,7 +36,7 @@ fun TermsAcceptDialog() {
                 val linkStyles = TextLinkStyles(
                     style = SpanStyle(
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = MiuixTheme.colorScheme.primary,
                     )
                 )
                 Text(
@@ -74,29 +74,34 @@ fun TermsAcceptDialog() {
     }
     var step by rememberSaveable { mutableIntStateOf(0) }
 
-    AlertDialog(
+    PerfAlertDialog(
         onDismissRequest = {},
         title = {
             Text(text = stepDataList[step].first)
         },
         text = stepDataList[step].second,
         confirmButton = {
-            TextButton(onClick = throttle {
-                if (step < stepDataList.size - 1) {
-                    step++
-                } else {
-                    mainVm.termsAcceptedFlow.value = true
-                }
-            }) {
-                Text(text = "同意")
-            }
+            TextButton(
+                text = "同意",
+                onClick = throttle {
+                    if (step < stepDataList.size - 1) {
+                        step++
+                    } else {
+                        mainVm.termsAcceptedFlow.value = true
+                    }
+                },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.textButtonColorsPrimary(),
+            )
         },
         dismissButton = {
-            TextButton(onClick = throttle {
-                context.finish()
-            }) {
-                Text(text = "不同意")
-            }
+            TextButton(
+                text = "不同意",
+                onClick = throttle {
+                    context.finish()
+                },
+                modifier = Modifier.weight(1f),
+            )
         }
     )
 }

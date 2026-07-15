@@ -16,27 +16,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
@@ -48,19 +40,19 @@ import li.songe.gkd.data.Snapshot
 import li.songe.gkd.db.DbSet
 import li.songe.gkd.permission.canWriteExternalStorage
 import li.songe.gkd.permission.requiredPermission
+import li.songe.gkd.ui.component.AppPageScaffold
 import li.songe.gkd.ui.component.EmptyText
 import li.songe.gkd.ui.component.FixedTimeText
 import li.songe.gkd.ui.component.LocalNumberCharWidth
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
-import li.songe.gkd.ui.component.PerfTopAppBar
+import li.songe.gkd.ui.component.TextListDialog
 import li.songe.gkd.ui.component.animateListItem
 import li.songe.gkd.ui.component.measureNumberTextWidth
 import li.songe.gkd.ui.component.useListScrollState
 import li.songe.gkd.ui.component.waitResult
 import li.songe.gkd.ui.share.ListPlaceholder
 import li.songe.gkd.ui.share.LocalMainViewModel
-import li.songe.gkd.ui.share.noRippleClickable
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.itemHorizontalPadding
 import li.songe.gkd.ui.style.itemVerticalPadding
@@ -76,6 +68,7 @@ import li.songe.gkd.util.saveFileToDownloads
 import li.songe.gkd.util.shareFile
 import li.songe.gkd.util.throttle
 import li.songe.gkd.util.toast
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Serializable
 data object SnapshotPageRoute : NavKey
@@ -84,53 +77,43 @@ data object SnapshotPageRoute : NavKey
 fun SnapshotPage() {
     val context = LocalActivity.current as MainActivity
     val mainVm = LocalMainViewModel.current
-    val colorScheme = MaterialTheme.colorScheme
     val vm = viewModel<SnapshotVm>()
 
     val firstLoading by vm.firstLoadingFlow.collectAsState()
     val snapshots by vm.snapshotsState.collectAsState()
     var selectedSnapshot by remember { mutableStateOf<Snapshot?>(null) }
-    val resetKey = rememberSaveable { mutableIntStateOf(0) }
-    val (scrollBehavior, listState) = useListScrollState(
-        resetKey,
+    val listState = useListScrollState(
         snapshots.isEmpty(),
         firstLoading,
     )
     val timeTextWidth = measureNumberTextWidth(MaterialTheme.typography.bodySmall)
 
-    Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection), topBar = {
-        PerfTopAppBar(
-            scrollBehavior = scrollBehavior,
-            navigationIcon = {
-                PerfIconButton(imageVector = PerfIcon.ArrowBack, onClick = {
-                    mainVm.popPage()
-                })
-            },
-            title = {
-                Text(
-                    text = "快照记录",
-                    modifier = Modifier.noRippleClickable { resetKey.intValue++ },
-                )
-            },
-            actions = {
-                if (snapshots.isNotEmpty()) {
-                    PerfIconButton(
-                        imageVector = PerfIcon.Delete,
-                        onClick = throttle(fn = vm.viewModelScope.launchAsFn(Dispatchers.IO) {
-                            mainVm.dialogFlow.waitResult(
-                                title = "删除快照",
-                                text = "确定删除所有快照记录?",
-                                error = true,
-                            )
-                            snapshots.forEach { s ->
-                                SnapshotExt.removeSnapshot(s.id)
-                            }
-                            DbSet.snapshotDao.deleteAll()
-                        })
-                    )
-                }
+    AppPageScaffold(
+        title = "快照记录",
+        navigationIcon = {
+            PerfIconButton(imageVector = PerfIcon.ArrowBack, onClick = {
+                mainVm.popPage()
             })
-    }, content = { contentPadding ->
+        },
+        actions = {
+            if (snapshots.isNotEmpty()) {
+                PerfIconButton(
+                    imageVector = PerfIcon.Delete,
+                    onClick = throttle(fn = vm.viewModelScope.launchAsFn(Dispatchers.IO) {
+                        mainVm.dialogFlow.waitResult(
+                            title = "删除快照",
+                            text = "确定删除所有快照记录?",
+                            error = true,
+                        )
+                        snapshots.forEach { s ->
+                            SnapshotExt.removeSnapshot(s.id)
+                        }
+                        DbSet.snapshotDao.deleteAll()
+                    })
+                )
+            }
+        },
+    ) { contentPadding ->
         CompositionLocalProvider(
             LocalNumberCharWidth provides timeTextWidth
         ) {
@@ -155,149 +138,92 @@ fun SnapshotPage() {
                 }
             }
         }
-    })
+    }
 
     selectedSnapshot?.let { snapshotVal ->
-        Dialog(onDismissRequest = { selectedSnapshot = null }) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                shape = RoundedCornerShape(16.dp),
-            ) {
-                val modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                Text(
-                    text = "查看", modifier = Modifier
-                        .clickable(onClick = throttle(fn = vm.viewModelScope.launchAsFn {
-                            selectedSnapshot = null
-                            mainVm.navigatePage(
-                                ImagePreviewRoute(
-                                    title = appInfoMapFlow.value[snapshotVal.appId]?.name
-                                        ?: snapshotVal.appId,
-                                    uri = snapshotVal.screenshotFile.absolutePath,
-                                )
-                            )
-                        }))
-                        .then(modifier)
-                )
-                HorizontalDivider()
-                Text(
-                    text = "分享到其他应用",
-                    modifier = Modifier
-                        .clickable(onClick = throttle(fn = vm.viewModelScope.launchAsFn {
-                            selectedSnapshot = null
-                            val zipFile = SnapshotExt.snapshotZipFile(
-                                snapshotVal.id,
-                                snapshotVal.appId,
-                                snapshotVal.activityId
-                            )
-                            context.shareFile(zipFile, "分享快照文件")
-                        }))
-                        .then(modifier)
-                )
-                HorizontalDivider()
-                Text(
-                    text = "保存到下载",
-                    modifier = Modifier
-                        .clickable(onClick = throttle(fn = vm.viewModelScope.launchAsFn(Dispatchers.IO) {
-                            selectedSnapshot = null
-                            toast("正在保存...")
-                            val zipFile = SnapshotExt.snapshotZipFile(
-                                snapshotVal.id,
-                                snapshotVal.appId,
-                                snapshotVal.activityId
-                            )
-                            context.saveFileToDownloads(zipFile)
-                        }))
-                        .then(modifier)
-                )
-                HorizontalDivider()
+        TextListDialog(
+            onDismiss = { selectedSnapshot = null },
+            title = "快照操作",
+            textList = listOf(
+                "查看" to vm.viewModelScope.launchAsFn {
+                    mainVm.navigatePage(
+                        ImagePreviewRoute(
+                            title = appInfoMapFlow.value[snapshotVal.appId]?.name
+                                ?: snapshotVal.appId,
+                            uri = snapshotVal.screenshotFile.absolutePath,
+                        )
+                    )
+                },
+                "分享到其他应用" to vm.viewModelScope.launchAsFn {
+                    val zipFile = SnapshotExt.snapshotZipFile(
+                        snapshotVal.id,
+                        snapshotVal.appId,
+                        snapshotVal.activityId
+                    )
+                    context.shareFile(zipFile, "分享快照文件")
+                },
+                "保存到下载" to vm.viewModelScope.launchAsFn(Dispatchers.IO) {
+                    toast("正在保存...")
+                    val zipFile = SnapshotExt.snapshotZipFile(
+                        snapshotVal.id,
+                        snapshotVal.appId,
+                        snapshotVal.activityId
+                    )
+                    context.saveFileToDownloads(zipFile)
+                },
                 if (snapshotVal.githubAssetId != null) {
-                    Text(
-                        text = "复制链接", modifier = Modifier
-                            .clickable(onClick = throttle {
-                                selectedSnapshot = null
-                                copyText(IMPORT_SHORT_URL + snapshotVal.githubAssetId)
-                            })
-                            .then(modifier)
-                    )
+                    "复制链接" to {
+                        copyText(IMPORT_SHORT_URL + snapshotVal.githubAssetId)
+                    }
                 } else {
-                    Text(
-                        text = "生成链接(需科学上网)", modifier = Modifier
-                            .clickable(onClick = throttle {
-                                selectedSnapshot = null
-                                mainVm.uploadOptions.startTask(
-                                    getFile = { SnapshotExt.snapshotZipFile(snapshotVal.id) },
-                                    showHref = { IMPORT_SHORT_URL + it.id },
-                                    onSuccessResult = {
-                                        DbSet.snapshotDao.update(snapshotVal.copy(githubAssetId = it.id))
-                                    }
-                                )
-                            })
-                            .then(modifier)
+                    "生成链接(需科学上网)" to {
+                        mainVm.uploadOptions.startTask(
+                            getFile = { SnapshotExt.snapshotZipFile(snapshotVal.id) },
+                            showHref = { IMPORT_SHORT_URL + it.id },
+                            onSuccessResult = {
+                                DbSet.snapshotDao.update(snapshotVal.copy(githubAssetId = it.id))
+                            }
+                        )
+                    }
+                },
+                "保存截图到相册" to vm.viewModelScope.launchAsFn(Dispatchers.IO) {
+                    toast("正在保存...")
+                    requiredPermission(context, canWriteExternalStorage)
+                    ImageUtils.save2Album(BitmapFactory.decodeFile(snapshotVal.screenshotFile.absolutePath))
+                    toast("保存成功")
+                },
+                "替换截图(去除隐私)" to vm.viewModelScope.launchAsFn(Dispatchers.IO) {
+                    val uri = context.pickContentLauncher.launchForImageResult()
+                    val oldBitmap =
+                        BitmapFactory.decodeFile(snapshotVal.screenshotFile.absolutePath)
+                    val newBytes = UriUtils.uri2Bytes(uri)
+                    val newBitmap =
+                        BitmapFactory.decodeByteArray(newBytes, 0, newBytes.size)
+                    if (oldBitmap.width == newBitmap.width && oldBitmap.height == newBitmap.height) {
+                        snapshotVal.screenshotFile.writeBytes(newBytes)
+                        if (snapshotVal.githubAssetId != null) {
+                            // 当本地快照变更时, 移除快照链接
+                            DbSet.snapshotDao.deleteGithubAssetId(snapshotVal.id)
+                        }
+                        toast("替换成功")
+                    } else {
+                        toast("截图尺寸不一致, 无法替换")
+                    }
+                },
+                "删除" to vm.viewModelScope.launchAsFn {
+                    mainVm.dialogFlow.waitResult(
+                        title = "删除快照",
+                        text = "确定删除当前快照吗?",
+                        error = true,
                     )
-                }
-                HorizontalDivider()
-
-                Text(
-                    text = "保存截图到相册",
-                    modifier = Modifier
-                        .clickable(onClick = throttle(fn = vm.viewModelScope.launchAsFn(Dispatchers.IO) {
-                            toast("正在保存...")
-                            selectedSnapshot = null
-                            requiredPermission(context, canWriteExternalStorage)
-                            ImageUtils.save2Album(BitmapFactory.decodeFile(snapshotVal.screenshotFile.absolutePath))
-                            toast("保存成功")
-                        }))
-                        .then(modifier)
-                )
-                HorizontalDivider()
-                Text(
-                    text = "替换截图(去除隐私)",
-                    modifier = Modifier
-                        .clickable(onClick = throttle(fn = vm.viewModelScope.launchAsFn(Dispatchers.IO) {
-                            val uri = context.pickContentLauncher.launchForImageResult()
-                            val oldBitmap =
-                                BitmapFactory.decodeFile(snapshotVal.screenshotFile.absolutePath)
-                            val newBytes = UriUtils.uri2Bytes(uri)
-                            val newBitmap =
-                                BitmapFactory.decodeByteArray(newBytes, 0, newBytes.size)
-                            if (oldBitmap.width == newBitmap.width && oldBitmap.height == newBitmap.height) {
-                                snapshotVal.screenshotFile.writeBytes(newBytes)
-                                if (snapshotVal.githubAssetId != null) {
-                                    // 当本地快照变更时, 移除快照链接
-                                    DbSet.snapshotDao.deleteGithubAssetId(snapshotVal.id)
-                                }
-                                toast("替换成功")
-                                selectedSnapshot = null
-                            } else {
-                                toast("截图尺寸不一致, 无法替换")
-                            }
-                        }))
-                        .then(modifier)
-                )
-                HorizontalDivider()
-                Text(
-                    text = "删除", modifier = Modifier
-                        .clickable(onClick = throttle(fn = vm.viewModelScope.launchAsFn {
-                            selectedSnapshot = null
-                            mainVm.dialogFlow.waitResult(
-                                title = "删除快照",
-                                text = "确定删除当前快照吗?",
-                                error = true,
-                            )
-                            DbSet.snapshotDao.delete(snapshotVal)
-                            withContext(Dispatchers.IO) {
-                                SnapshotExt.removeSnapshot(snapshotVal.id)
-                            }
-                            toast("删除成功")
-                        }))
-                        .then(modifier), color = colorScheme.error
-                )
-            }
-        }
+                    DbSet.snapshotDao.delete(snapshotVal)
+                    withContext(Dispatchers.IO) {
+                        SnapshotExt.removeSnapshot(snapshotVal.id)
+                    }
+                    toast("删除成功")
+                },
+            ),
+        )
     }
 }
 

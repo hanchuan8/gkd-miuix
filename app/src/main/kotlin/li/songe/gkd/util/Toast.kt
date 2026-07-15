@@ -24,6 +24,7 @@ import com.hjq.toast.style.WhiteToastStyle
 import li.songe.gkd.app
 import li.songe.gkd.data.ResolvedRule
 import li.songe.gkd.isActivityVisible
+import li.songe.gkd.notif.ActionTipNotif
 import li.songe.gkd.permission.canDrawOverlaysState
 import li.songe.gkd.service.A11yService
 import li.songe.gkd.service.OverlayWindowService
@@ -129,11 +130,24 @@ fun showActionToast(rule: ResolvedRule) {
                 .replace($$"${1}", rule.rule.name.toString())
                 .replace($$"${2}", rule.g.group.name)
                 .replace($$"${3}", actionCountFlow.value.toString())
-            if (storeFlow.value.useSystemToast) {
-                showSystemToast(text)
-            } else {
-                showA11yToast(text)
-            }
+            showActionTip(text)
+        }
+    }
+}
+
+fun showActionTip(text: CharSequence): ActionTipNotif.PostResult? {
+    return when (storeFlow.value.resolveActionTipStyle()) {
+        ActionTipStyleOption.LiveNotif -> ActionTipNotif.show(
+            text,
+            autoDismissMs = storeFlow.value.actionTipLiveDurationMs,
+        )
+        ActionTipStyleOption.SystemToast -> {
+            showSystemToast(text)
+            null
+        }
+        ActionTipStyleOption.Overlay -> {
+            showA11yToast(text)
+            null
         }
     }
 }

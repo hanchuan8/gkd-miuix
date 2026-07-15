@@ -8,13 +8,10 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import li.songe.gkd.ui.component.PerfDropdownMenu
+import li.songe.gkd.ui.component.PerfDropdownMenuItem
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,7 +19,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation3.runtime.NavKey
 import com.kevinnzou.web.AccompanistWebViewClient
 import com.kevinnzou.web.LoadingState
@@ -36,9 +32,9 @@ import kotlinx.serialization.Serializable
 import li.songe.gkd.META
 import li.songe.gkd.MainActivity
 import li.songe.gkd.data.Value
+import li.songe.gkd.ui.component.AppPageScaffold
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
-import li.songe.gkd.ui.component.PerfTopAppBar
 import li.songe.gkd.ui.component.updateDialogOptions
 import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.ui.style.iconTextSize
@@ -60,84 +56,68 @@ fun WebViewPage(route: WebViewRoute) {
     val webViewState = rememberWebViewState(url = initUrl)
     val webViewClient = remember { GkdWebViewClient() }
     val webView = remember { Value<WebView?>(null) }
-    Scaffold(modifier = Modifier, topBar = {
-        PerfTopAppBar(
-            modifier = Modifier.fillMaxWidth(),
-            navigationIcon = {
-                PerfIconButton(
-                    imageVector = PerfIcon.ArrowBack,
-                    onClick = { mainVm.popPage() },
+    // webViewState.pageTitle 在调用 reload 后会变成 null
+    val pageTitle = webViewState.pageTitle ?: webView.value?.title ?: ""
+    val loading = webViewState.loadingState is LoadingState.Loading
+    AppPageScaffold(
+        title = if (loading) "加载中…" else pageTitle.ifEmpty { "网页" },
+        navigationIcon = {
+            PerfIconButton(
+                imageVector = PerfIcon.ArrowBack,
+                onClick = { mainVm.popPage() },
+            )
+        },
+        actions = {
+            if (loading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.iconTextSize(),
                 )
-            },
-            title = {
-                val loadingState = webViewState.loadingState
-                if (loadingState is LoadingState.Loading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.iconTextSize(),
+            }
+            if (chromeVersion in 1..<MINI_CHROME_VERSION) {
+                PerfIconButton(imageVector = PerfIcon.WarningAmber, onClick = throttle {
+                    mainVm.dialogFlow.updateDialogOptions(
+                        title = "兼容性提示",
+                        text = "检测到您的系统内置浏览器版本($chromeVersion)过低, 可能无法正常浏览网页文档\n\n建议自行升级版本后重启 GKD 再查看文档, 或点击右上角后在外部浏览器打开查阅\n\n若能正常浏览文档请忽略此项提示"
                     )
-                } else {
-                    Text(
-                        // webViewState.pageTitle 在调用 reload 后会变成 null
-                        text = webViewState.pageTitle ?: webView.value?.title ?: "",
-                        maxLines = 1,
-                        softWrap = false,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            },
-            actions = {
-                if (chromeVersion in 1..<MINI_CHROME_VERSION) {
-                    PerfIconButton(imageVector = PerfIcon.WarningAmber, onClick = throttle {
-                        mainVm.dialogFlow.updateDialogOptions(
-                            title = "兼容性提示",
-                            text = "检测到您的系统内置浏览器版本($chromeVersion)过低, 可能无法正常浏览网页文档\n\n建议自行升级版本后重启 GKD 再查看文档, 或点击右上角后在外部浏览器打开查阅\n\n若能正常浏览文档请忽略此项提示"
-                        )
-                    })
-                }
-                var expanded by remember { mutableStateOf(false) }
-                PerfIconButton(imageVector = PerfIcon.MoreVert, onClick = { expanded = true })
-                Box(
-                    modifier = Modifier
-                        .wrapContentSize(Alignment.TopStart)
+                })
+            }
+            var expanded by remember { mutableStateOf(false) }
+            PerfIconButton(imageVector = PerfIcon.MoreVert, onClick = { expanded = true })
+            Box(
+                modifier = Modifier
+                    .wrapContentSize(Alignment.TopStart)
+            ) {
+                PerfDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
                 ) {
-                    DropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        if (webViewState.loadingState !is LoadingState.Loading) {
-                            DropdownMenuItem(
-                                text = {
-                                    Text(text = "刷新页面")
-                                },
-                                onClick = {
-                                    expanded = false
-                                    webView.value?.reload()
-                                }
-                            )
-                        }
-                        DropdownMenuItem(
-                            text = {
-                                Text(text = "复制链接")
-                            },
+                    if (!loading) {
+                        PerfDropdownMenuItem(
+                            text = "刷新页面",
                             onClick = {
                                 expanded = false
-                                copyText(webView.value?.url ?: initUrl)
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = {
-                                Text(text = "外部打开")
-                            },
-                            onClick = {
-                                expanded = false
-                                openUri(webView.value?.url ?: initUrl)
+                                webView.value?.reload()
                             }
                         )
                     }
+                    PerfDropdownMenuItem(
+                        text = "复制链接",
+                        onClick = {
+                            expanded = false
+                            copyText(webView.value?.url ?: initUrl)
+                        }
+                    )
+                    PerfDropdownMenuItem(
+                        text = "外部打开",
+                        onClick = {
+                            expanded = false
+                            openUri(webView.value?.url ?: initUrl)
+                        }
+                    )
                 }
             }
-        )
-    }) { contentPadding ->
+        },
+    ) { contentPadding ->
         WebView(
             modifier = Modifier
                 .fillMaxSize()

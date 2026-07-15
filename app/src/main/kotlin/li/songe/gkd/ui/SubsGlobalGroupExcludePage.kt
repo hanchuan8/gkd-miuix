@@ -14,11 +14,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.IconButton
+import li.songe.gkd.ui.component.PerfDropdownMenu
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -60,7 +58,6 @@ import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
 import li.songe.gkd.ui.component.PerfSwitch
 import li.songe.gkd.ui.component.PerfTopAppBar
-import li.songe.gkd.ui.component.TowLineText
 import li.songe.gkd.ui.component.autoFocus
 import li.songe.gkd.ui.component.isFullVisible
 import li.songe.gkd.ui.component.useListScrollState
@@ -70,7 +67,6 @@ import li.songe.gkd.ui.icon.ResetSettings
 import li.songe.gkd.ui.share.ListPlaceholder
 import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.ui.share.asMutableState
-import li.songe.gkd.ui.share.noRippleClickable
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.itemPadding
 import li.songe.gkd.ui.style.scaffoldPadding
@@ -80,6 +76,9 @@ import li.songe.gkd.util.launchAsFn
 import li.songe.gkd.util.systemAppsFlow
 import li.songe.gkd.util.throttle
 import li.songe.gkd.util.toast
+import top.yukonga.miuix.kmp.basic.IconButton
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.Scaffold
 
 @Serializable
 data class SubsGlobalGroupExcludeRoute(
@@ -111,10 +110,11 @@ fun SubsGlobalGroupExcludePage(route: SubsGlobalGroupExcludeRoute) {
             searchStr = ""
         }
     })
-    val (scrollBehavior, listState) = useListScrollState(
+    val listState = useListScrollState(
         vm.resetKey,
         canScroll = { !editable }
     )
+    val miuixScrollBehavior = MiuixScrollBehavior()
 
     BackHandler(editable, onBack = throttle(vm.viewModelScope.launchAsFn {
         context.justHideSoftInput()
@@ -128,10 +128,19 @@ fun SubsGlobalGroupExcludePage(route: SubsGlobalGroupExcludeRoute) {
     }))
 
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = Modifier.nestedScroll(miuixScrollBehavior.nestedScrollConnection),
         topBar = {
+            if (showSearchBar) {
+                BackHandler {
+                    if (!context.justHideSoftInput()) {
+                        showSearchBar = false
+                    }
+                }
+            }
             PerfTopAppBar(
-                scrollBehavior = scrollBehavior,
+                titleText = if (showSearchBar) "" else group.name,
+                subtitle = if (showSearchBar) "" else "编辑禁用",
+                miuixScrollBehavior = miuixScrollBehavior,
                 canScroll = !editable,
                 navigationIcon = {
                     IconButton(onClick = throttle(vm.viewModelScope.launchAsFn {
@@ -146,13 +155,8 @@ fun SubsGlobalGroupExcludePage(route: SubsGlobalGroupExcludeRoute) {
                         BackCloseIcon(backOrClose = !editable)
                     }
                 },
-                title = {
+                bottomContent = {
                     if (showSearchBar) {
-                        BackHandler {
-                            if (!context.justHideSoftInput()) {
-                                showSearchBar = false
-                            }
-                        }
                         AppBarTextField(
                             value = searchStr,
                             onValueChange = { newValue ->
@@ -160,12 +164,6 @@ fun SubsGlobalGroupExcludePage(route: SubsGlobalGroupExcludeRoute) {
                             },
                             hint = "请输入应用名称/ID",
                             modifier = Modifier.autoFocus(),
-                        )
-                    } else {
-                        TowLineText(
-                            title = group.name,
-                            subtitle = "编辑禁用",
-                            modifier = Modifier.noRippleClickable { vm.resetKey.intValue++ }
                         )
                     }
                 },
@@ -224,7 +222,7 @@ fun SubsGlobalGroupExcludePage(route: SubsGlobalGroupExcludeRoute) {
                                     modifier = Modifier
                                         .wrapContentSize(Alignment.TopStart)
                                 ) {
-                                    DropdownMenu(
+                                    PerfDropdownMenu(
                                         expanded = expanded,
                                         onDismissRequest = { expanded = false }
                                     ) {
@@ -269,7 +267,7 @@ fun SubsGlobalGroupExcludePage(route: SubsGlobalGroupExcludeRoute) {
         },
         floatingActionButton = {
             AnimationFloatingActionButton(
-                visible = !editable && scrollBehavior.isFullVisible,
+                visible = !editable && miuixScrollBehavior.isFullVisible,
                 onClick = {
                     editable = !editable
                 },

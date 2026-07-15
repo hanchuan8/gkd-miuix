@@ -8,9 +8,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Scaffold
+import li.songe.gkd.ui.component.PerfDropdownMenu
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -31,6 +29,7 @@ import li.songe.gkd.R
 import li.songe.gkd.data.AppConfig
 import li.songe.gkd.db.DbSet
 import li.songe.gkd.ui.component.AnimatedIconButton
+import li.songe.gkd.ui.component.AnimationFloatingActionButton
 import li.songe.gkd.ui.component.AppBarTextField
 import li.songe.gkd.ui.component.EmptyText
 import li.songe.gkd.ui.component.MenuGroupCard
@@ -40,14 +39,12 @@ import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
 import li.songe.gkd.ui.component.PerfTopAppBar
 import li.songe.gkd.ui.component.SubsAppCard
-import li.songe.gkd.ui.component.TowLineText
 import li.songe.gkd.ui.component.autoFocus
 import li.songe.gkd.ui.component.useListScrollState
 import li.songe.gkd.ui.component.useSubs
 import li.songe.gkd.ui.share.ListPlaceholder
 import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.ui.share.asMutableState
-import li.songe.gkd.ui.share.noRippleClickable
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.scaffoldPadding
 import li.songe.gkd.util.AppGroupOption
@@ -55,6 +52,8 @@ import li.songe.gkd.util.AppSortOption
 import li.songe.gkd.util.LOCAL_SUBS_IDS
 import li.songe.gkd.util.launchAsFn
 import li.songe.gkd.util.throttle
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.Scaffold
 
 @Serializable
 data class SubsAppListRoute(val subsItemId: Long) : NavKey
@@ -76,46 +75,48 @@ fun SubsAppListPage(route: SubsAppListRoute) {
             vm.searchStrFlow.value = ""
         }
     })
-    val (scrollBehavior, listState) = useListScrollState(
+    val listState = useListScrollState(
         vm.resetKey,
     )
+    val miuixScrollBehavior = MiuixScrollBehavior()
     var expanded by remember { mutableStateOf(false) }
 
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = Modifier.nestedScroll(miuixScrollBehavior.nestedScrollConnection),
         topBar = {
-            PerfTopAppBar(scrollBehavior = scrollBehavior, navigationIcon = {
-                PerfIconButton(
-                    imageVector = PerfIcon.ArrowBack,
-                    onClick = throttle(vm.viewModelScope.launchAsFn {
-                        context.hideSoftInput()
-                        mainVm.popPage()
-                    }),
-                )
-            }, title = {
-                val firstShowSearchBar = remember { showSearchBar }
-                if (showSearchBar) {
-                    BackHandler {
-                        if (!context.justHideSoftInput()) {
-                            showSearchBar = false
-                        }
+            if (showSearchBar) {
+                BackHandler {
+                    if (!context.justHideSoftInput()) {
+                        showSearchBar = false
                     }
-                    AppBarTextField(
-                        value = searchStr,
-                        onValueChange = { newValue -> vm.searchStrFlow.value = newValue.trim() },
-                        hint = "请输入应用名称/ID",
-                        modifier = if (firstShowSearchBar) Modifier else Modifier.autoFocus(),
-                    )
-                } else {
-                    TowLineText(
-                        title = useSubs(subsItemId)?.name ?: subsItemId.toString(),
-                        subtitle = "应用规则",
-                        modifier = Modifier.noRippleClickable {
-                            vm.resetKey.intValue++
-                        }
-                    )
                 }
-            }, actions = {
+            }
+            val firstShowSearchBar = remember { showSearchBar }
+            val subsName = useSubs(subsItemId)?.name ?: subsItemId.toString()
+            PerfTopAppBar(
+                titleText = if (showSearchBar) "" else subsName,
+                subtitle = if (showSearchBar) "" else "应用规则",
+                miuixScrollBehavior = miuixScrollBehavior,
+                navigationIcon = {
+                    PerfIconButton(
+                        imageVector = PerfIcon.ArrowBack,
+                        onClick = throttle(vm.viewModelScope.launchAsFn {
+                            context.hideSoftInput()
+                            mainVm.popPage()
+                        }),
+                    )
+                },
+                bottomContent = {
+                    if (showSearchBar) {
+                        AppBarTextField(
+                            value = searchStr,
+                            onValueChange = { newValue -> vm.searchStrFlow.value = newValue.trim() },
+                            hint = "请输入应用名称/ID",
+                            modifier = if (firstShowSearchBar) Modifier else Modifier.autoFocus(),
+                        )
+                    }
+                },
+                actions = {
                 AnimatedIconButton(
                     onClick = {
                         if (showSearchBar) {
@@ -140,7 +141,7 @@ fun SubsAppListPage(route: SubsAppListRoute) {
                 Box(
                     modifier = Modifier.wrapContentSize(Alignment.TopStart)
                 ) {
-                    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                    PerfDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
                         MenuGroupCard(inTop = true, title = "排序") {
                             var sortType by vm.sortTypeFlow.asMutableState()
                             AppSortOption.objects.forEach { option ->
@@ -174,8 +175,9 @@ fun SubsAppListPage(route: SubsAppListRoute) {
             })
         },
         floatingActionButton = {
-            if (LOCAL_SUBS_IDS.contains(subsItemId)) {
-                FloatingActionButton(onClick = throttle {
+            AnimationFloatingActionButton(
+                visible = LOCAL_SUBS_IDS.contains(subsItemId),
+                onClick = throttle {
                     mainVm.navigatePage(
                         UpsertRuleGroupRoute(
                             subsId = subsItemId,
@@ -184,12 +186,10 @@ fun SubsAppListPage(route: SubsAppListRoute) {
                             forward = true,
                         )
                     )
-                }) {
-                    PerfIcon(
-                        imageVector = PerfIcon.Add,
-                    )
-                }
-            }
+                },
+                imageVector = PerfIcon.Add,
+                contentDescription = "添加应用规则",
+            )
         },
     ) { contentPadding ->
         LazyColumn(

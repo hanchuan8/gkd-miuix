@@ -1,7 +1,6 @@
 package li.songe.gkd.ui.component
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
@@ -33,6 +32,9 @@ import li.songe.gkd.util.subsMapFlow
 import li.songe.gkd.util.throttle
 import li.songe.gkd.util.toast
 import li.songe.gkd.util.updateSubscription
+import top.yukonga.miuix.kmp.basic.Scaffold
+import top.yukonga.miuix.kmp.basic.TopAppBar
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 data class ShowGroupState(
     val subsId: Long,
@@ -390,18 +392,15 @@ class RuleGroupState(
                 }
                 BackHandler(onBack = onBack)
                 Scaffold(
+                    containerColor = MiuixTheme.colorScheme.surface,
                     topBar = {
-                        PerfTopAppBar(
+                        TopAppBar(
+                            title = excludeGroup.name,
+                            color = MiuixTheme.colorScheme.surface,
                             navigationIcon = {
                                 PerfIconButton(
                                     imageVector = PerfIcon.Close,
                                     onClick = onBack
-                                )
-                            },
-                            title = {
-                                TowLineText(
-                                    title = excludeGroup.name,
-                                    subtitle = "编辑禁用",
                                 )
                             },
                             actions = {
@@ -427,7 +426,8 @@ class RuleGroupState(
                                         }
                                     }
                                 })
-                            }
+                            },
+                            defaultWindowInsetsPadding = true,
                         )
                     },
                 ) { contentPadding ->

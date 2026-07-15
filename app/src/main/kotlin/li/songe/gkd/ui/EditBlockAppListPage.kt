@@ -2,9 +2,6 @@ package li.songe.gkd.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
@@ -14,10 +11,10 @@ import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 import li.songe.gkd.MainActivity
 import li.songe.gkd.store.blockMatchAppListFlow
+import li.songe.gkd.ui.component.AppPageScaffold
 import li.songe.gkd.ui.component.MultiTextField
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
-import li.songe.gkd.ui.component.PerfTopAppBar
 import li.songe.gkd.ui.component.waitResult
 import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.ui.style.scaffoldPadding
@@ -46,34 +43,31 @@ fun EditBlockAppListPage() {
         mainVm.popPage()
     })
     BackHandler(onBack = onBack)
-    Scaffold(modifier = Modifier, topBar = {
-        PerfTopAppBar(
-            modifier = Modifier.fillMaxWidth(),
-            navigationIcon = {
-                PerfIconButton(
-                    imageVector = PerfIcon.ArrowBack,
-                    onClick = onBack,
-                )
-            },
-            title = { Text(text = "应用白名单") },
-            actions = {
-                PerfIconButton(
-                    imageVector = PerfIcon.Save,
-                    onClick = throttle(vm.viewModelScope.launchAsFn {
-                        val newSet = vm.getChangedSet()
-                        if (newSet != null) {
-                            blockMatchAppListFlow.value = newSet
-                            toast("更新成功")
-                        } else {
-                            toast("未修改")
-                        }
-                        context.hideSoftInput()
-                        mainVm.popPage()
-                    })
-                )
-            }
-        )
-    }) { contentPadding ->
+    AppPageScaffold(
+        title = "应用白名单",
+        navigationIcon = {
+            PerfIconButton(
+                imageVector = PerfIcon.ArrowBack,
+                onClick = onBack,
+            )
+        },
+        actions = {
+            PerfIconButton(
+                imageVector = PerfIcon.Save,
+                onClick = throttle(vm.viewModelScope.launchAsFn {
+                    val newSet = vm.getChangedSet()
+                    if (newSet != null) {
+                        blockMatchAppListFlow.value = newSet
+                        toast("更新成功")
+                    } else {
+                        toast("未修改")
+                    }
+                    context.hideSoftInput()
+                    mainVm.popPage()
+                })
+            )
+        },
+    ) { contentPadding ->
         MultiTextField(
             modifier = Modifier.scaffoldPadding(contentPadding),
             textFlow = vm.textFlow,

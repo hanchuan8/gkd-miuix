@@ -1,9 +1,5 @@
 package li.songe.gkd.ui.style
 
-import androidx.compose.material3.CardColors
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -11,10 +7,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import li.songe.json5.Json5
 import li.songe.json5.Json5Token
 
-
-val surfaceCardColors: CardColors
-    @Composable
-    get() = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
 
 private fun getDarkJson5TokenColor(json5Token: Json5Token?): Color = when (json5Token) {
     null -> Color(0xFFFF00FF) // unknown token color

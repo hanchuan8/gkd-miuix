@@ -1,0 +1,8 @@
+{
+  "versionCode": 92,
+  "versionName": "1.12.1",
+  "changelog": "GKD-X MIUIX 界面适配\n\n- 全量 MIUIX UI\n- 首页 / 订阅 / 触发记录等页面优化\n- 触发提示支持实时通知\n详见仓库 CHANGELOG.md",
+  "downloadUrl": "https://github.com/hanchuan8/gkd-miuix/releases/latest",
+  "fileSize": 1,
+  "versionLogs": []
+}

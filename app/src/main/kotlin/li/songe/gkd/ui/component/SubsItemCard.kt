@@ -10,11 +10,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -45,6 +40,11 @@ import li.songe.gkd.util.subsLoadErrorsFlow
 import li.songe.gkd.util.subsRefreshErrorsFlow
 import li.songe.gkd.util.throttle
 import li.songe.gkd.util.updateSubsMutex
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.CardDefaults
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.theme.LocalContentColor
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 
 @Composable
@@ -80,9 +80,9 @@ fun SubsItemCard(
     }
     val containerColor = animateColorAsState(
         if (isSelected) {
-            MaterialTheme.colorScheme.primaryContainer
+            MiuixTheme.colorScheme.primaryContainer
         } else {
-            MaterialTheme.colorScheme.surfaceContainer
+            MiuixTheme.colorScheme.surfaceContainer
         },
         tween()
     )
@@ -99,10 +99,8 @@ fun SubsItemCard(
                 this.onClick(label = "查看订阅详情", action = null)
                 this.onLongClick(label = "进入多选模式", action = null)
             },
-        shape = MaterialTheme.shapes.small,
-        interactionSource = interactionSource,
-        colors = CardDefaults.cardColors(
-            containerColor = containerColor.value
+        colors = CardDefaults.defaultColors(
+            color = containerColor.value
         ),
     ) {
         Row(
@@ -122,11 +120,11 @@ fun SubsItemCard(
                         maxLines = 1,
                         softWrap = false,
                         overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MiuixTheme.textStyles.body1,
                     )
                     Text(
                         text = subscription.numText,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MiuixTheme.textStyles.body2,
                         color = if (subscription.groupsSize == 0) {
                             LocalContentColor.current.copy(alpha = 0.5f)
                         } else {
@@ -143,7 +141,7 @@ fun SubsItemCard(
                                         contentDescription = "作者 ${subscription.author}"
                                     },
                                     text = subscription.author,
-                                    style = MaterialTheme.typography.labelSmall,
+                                    style = MiuixTheme.textStyles.footnote2,
                                 )
                             }
                             Text(
@@ -151,14 +149,14 @@ fun SubsItemCard(
                                     contentDescription = "订阅版本号 ${subscription.version}"
                                 },
                                 text = "v" + (subscription.version.toString()),
-                                style = MaterialTheme.typography.labelSmall,
+                                style = MiuixTheme.textStyles.footnote2,
                             )
                         } else {
                             Text(
                                 modifier = Modifier.clearAndSetSemantics {},
                                 text = META.appName,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.secondary,
+                                style = MiuixTheme.textStyles.footnote2,
+                                color = MiuixTheme.colorScheme.secondary,
                             )
                         }
                         val timeStr = formatTimeAgo(subsItem.mtime)
@@ -167,7 +165,7 @@ fun SubsItemCard(
                                 contentDescription = "更新时间 $timeStr"
                             },
                             text = timeStr,
-                            style = MaterialTheme.typography.labelSmall,
+                            style = MiuixTheme.textStyles.footnote2,
                         )
                     }
                 } else {
@@ -176,25 +174,25 @@ fun SubsItemCard(
                         maxLines = 1,
                         softWrap = false,
                         overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MiuixTheme.textStyles.body2,
                     )
                     val color = if (subsLoadError != null) {
-                        MaterialTheme.colorScheme.error
+                        MiuixTheme.colorScheme.error
                     } else {
                         Color.Unspecified
                     }
                     Text(
                         text = subsLoadError?.message
                             ?: if (subsRefreshing) "加载中..." else "文件不存在",
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MiuixTheme.textStyles.body2,
                         color = color
                     )
                 }
                 if (subsRefreshError != null) {
                     Text(
                         text = "更新错误: ${subsRefreshError?.message}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error
+                        style = MiuixTheme.textStyles.body2,
+                        color = MiuixTheme.colorScheme.error
                     )
                 }
             }
@@ -218,26 +216,3 @@ fun SubsItemCard(
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

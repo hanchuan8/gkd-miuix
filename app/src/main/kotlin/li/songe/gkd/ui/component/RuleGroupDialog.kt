@@ -13,9 +13,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
+import li.songe.gkd.ui.component.PerfAlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -51,7 +51,7 @@ fun RuleGroupDialog(
     onClickDelete: () -> Unit = {}
 ) {
     val mainVm = LocalMainViewModel.current
-    AlertDialog(
+    PerfAlertDialog(
         onDismissRequest = onDismissRequest,
         title = { Text(text = "规则详情") },
         text = {

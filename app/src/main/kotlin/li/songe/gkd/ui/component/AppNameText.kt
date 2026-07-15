@@ -3,10 +3,10 @@ package li.songe.gkd.ui.component
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
@@ -23,10 +23,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isUnspecified
 import li.songe.gkd.data.AppInfo
 import li.songe.gkd.data.otherUserMapFlow
 import li.songe.gkd.shizuku.currentUserId
 import li.songe.gkd.util.appInfoMapFlow
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun AppNameText(
@@ -61,7 +64,7 @@ fun AppNameText(
             color = color,
         )
     } else {
-        val userNameColor = MaterialTheme.colorScheme.tertiary
+        val userNameColor = MiuixTheme.colorScheme.secondary
         val annotatedString = remember(showSystemIcon, appName, userName, userNameColor) {
             buildAnnotatedString {
                 if (showSystemIcon) {
@@ -83,19 +86,20 @@ fun AppNameText(
         }
         val inlineContent = if (showSystemIcon) {
             val contentColor = style.color.takeOrElse { LocalContentColor.current }
-            remember(style, contentColor) {
+            val placeholderHeight = style.lineHeight.takeUnless { it.isUnspecified } ?: style.fontSize
+            remember(style, contentColor, placeholderHeight) {
                 mapOf(
                     "icon" to InlineTextContent(
                         placeholder = Placeholder(
                             width = style.fontSize,
-                            height = style.lineHeight,
+                            height = placeholderHeight,
                             placeholderVerticalAlign = PlaceholderVerticalAlign.Center
                         )
                     ) {
                         PerfIcon(
                             imageVector = PerfIcon.VerifiedUser,
                             modifier = Modifier
-                                .clip(MaterialTheme.shapes.extraSmall)
+                                .clip(RoundedCornerShape(2.dp))
                                 .fillMaxSize(),
                             tint = contentColor
                         )

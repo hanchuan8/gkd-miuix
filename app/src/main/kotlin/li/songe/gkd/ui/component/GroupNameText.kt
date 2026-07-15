@@ -5,7 +5,7 @@ import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.Text
+import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -16,6 +16,7 @@ import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.isUnspecified
 import li.songe.gkd.ui.icon.SportsBasketball
 
 @Composable
@@ -41,12 +42,13 @@ fun GroupNameText(
             }
         }
         val textColor = color.takeOrElse { style.color.takeOrElse { LocalContentColor.current } }
-        val inlineContent = remember(style, textColor) {
+        val placeholderHeight = style.lineHeight.takeUnless { it.isUnspecified } ?: style.fontSize
+        val inlineContent = remember(style, textColor, placeholderHeight) {
             mapOf(
                 "icon" to InlineTextContent(
                     placeholder = Placeholder(
                         width = style.fontSize,
-                        height = style.lineHeight,
+                        height = placeholderHeight,
                         placeholderVerticalAlign = PlaceholderVerticalAlign.Center
                     )
                 ) {

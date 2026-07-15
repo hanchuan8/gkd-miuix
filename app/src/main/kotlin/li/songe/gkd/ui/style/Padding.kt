@@ -8,12 +8,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 
 val itemHorizontalPadding = 16.dp
 val itemVerticalPadding = 12.dp
 val EmptyHeight = 80.dp
 val cardHorizontalPadding = 12.dp
+
+/** MIUIX 部分 TextStyle 的 lineHeight/fontSize 不是 Sp，直接 toDp() 会崩溃 */
+fun TextUnit.toSpDpOr(density: Density, fallback: Dp): Dp = with(density) {
+    if (isSp) toDp() else fallback
+}
+
+fun TextStyle.lineHeightDp(density: Density, fallback: Dp = 20.dp): Dp =
+    lineHeight.toSpDpOr(density, fontSize.toSpDpOr(density, fallback))
 
 fun Modifier.itemPadding() = this.padding(itemHorizontalPadding, itemVerticalPadding)
 
@@ -39,8 +50,8 @@ fun Modifier.iconTextSize(
     square: Boolean = true,
 ): Modifier {
     val density = LocalDensity.current
-    val lineHeightDp = density.run { textStyle.lineHeight.toDp() }
-    val fontSizeDp = density.run { textStyle.fontSize.toDp() }
+    val lineHeightDp = textStyle.lineHeightDp(density)
+    val fontSizeDp = textStyle.fontSize.toSpDpOr(density, 14.dp)
     return if (square) {
         padding((lineHeightDp - fontSizeDp) / 2).size(fontSizeDp)
     } else {

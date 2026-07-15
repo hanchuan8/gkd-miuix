@@ -1,15 +1,15 @@
 package li.songe.gkd.ui.component
 
 import android.webkit.URLUtil
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import kotlinx.coroutines.flow.MutableStateFlow
 import li.songe.gkd.util.openUri
 import li.songe.gkd.util.throttle
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextButton
 
 @Composable
 fun TextDialog(
@@ -21,7 +21,7 @@ fun TextDialog(
         val onDismissRequest = {
             textFlow.value = null
         }
-        AlertDialog(
+        PerfAlertDialog(
             onDismissRequest = onDismissRequest,
             title = {
                 Text(text = if (isUri) "查看链接" else "查看文本")
@@ -31,16 +31,20 @@ fun TextDialog(
             },
             confirmButton = {
                 if (isUri) {
-                    TextButton(onClick = throttle {
-                        onDismissRequest()
-                        openUri(text)
-                    }) {
-                        Text(text = "打开")
-                    }
+                    TextButton(
+                        text = "打开",
+                        onClick = throttle {
+                            onDismissRequest()
+                            openUri(text)
+                        },
+                        modifier = Modifier.weight(1f),
+                    )
                 } else {
-                    TextButton(onClick = onDismissRequest) {
-                        Text(text = "关闭")
-                    }
+                    TextButton(
+                        text = "关闭",
+                        onClick = onDismissRequest,
+                        modifier = Modifier.weight(1f),
+                    )
                 }
             },
         )

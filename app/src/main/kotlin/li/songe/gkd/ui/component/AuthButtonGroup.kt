@@ -1,12 +1,10 @@
 package li.songe.gkd.ui.component
 
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import li.songe.gkd.util.throttle
+import top.yukonga.miuix.kmp.basic.TextButton
 
 @Composable
 fun AuthButtonGroup(
@@ -17,12 +15,7 @@ fun AuthButtonGroup(
         modifier = modifier,
     ) {
         buttons.forEach { (text, click) ->
-            TextButton(onClick = throttle(click)) {
-                Text(
-                    text = text,
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-            }
+            TextButton(text = text, onClick = throttle(click))
         }
     }
 }

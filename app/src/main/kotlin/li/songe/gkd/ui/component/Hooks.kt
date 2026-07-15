@@ -6,9 +6,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
-import androidx.compose.material3.TopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ReadOnlyComposable
@@ -23,11 +20,15 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import li.songe.gkd.data.RawSubscription
+import li.songe.gkd.ui.style.lineHeightDp
+import li.songe.gkd.ui.style.toSpDpOr
 import li.songe.gkd.util.mapState
 import li.songe.gkd.util.subsMapFlow
+import top.yukonga.miuix.kmp.basic.ScrollBehavior
 
 @Composable
 fun useSubs(subsId: Long?): RawSubscription? {
@@ -78,47 +79,28 @@ fun useListScrollState(
     v1: Any?,
     v2: Any? = null,
     v3: Any? = null,
-    canScroll: () -> Boolean = { true },
-): Pair<TopAppBarScrollBehavior, LazyListState> {
+    @Suppress("UNUSED_PARAMETER") canScroll: () -> Boolean = { true },
+): LazyListState {
     val x1 = getCompatStateValue(v1)
     val x2 = getCompatStateValue(v2)
     val x3 = getCompatStateValue(v3)
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
-        state = rememberSaveable(x1, x2, x3, saver = TopAppBarState.Saver) {
-            TopAppBarState(-Float.MAX_VALUE, 0f, 0f)
-        },
-        canScroll = canScroll
-    )
-    val scrollState = rememberSaveable(x1, x2, x3, saver = LazyListState.Saver) {
+    return rememberSaveable(x1, x2, x3, saver = LazyListState.Saver) {
         LazyListState(0, 0)
     }
-    return scrollBehavior to scrollState
 }
 
 @Composable
-fun usePinnedScrollBehaviorState(v1: Any?): Pair<TopAppBarScrollBehavior, LazyListState> {
+fun usePinnedScrollBehaviorState(v1: Any?): LazyListState {
     val x1 = getCompatStateValue(v1)
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(
-        state = rememberSaveable(x1, saver = TopAppBarState.Saver) {
-            TopAppBarState(-Float.MAX_VALUE, 0f, 0f)
-        },
-    )
-    val scrollState = rememberSaveable(x1, saver = LazyListState.Saver) {
+    return rememberSaveable(x1, saver = LazyListState.Saver) {
         LazyListState(0, 0)
     }
-    return scrollBehavior to scrollState
 }
 
 @Composable
-fun useScrollBehaviorState(v1: Any?): Pair<TopAppBarScrollBehavior, ScrollState> {
+fun useScrollBehaviorState(v1: Any?): ScrollState {
     val x1 = getCompatStateValue(v1)
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
-        state = rememberSaveable(x1, saver = TopAppBarState.Saver) {
-            TopAppBarState(-Float.MAX_VALUE, 0f, 0f)
-        },
-    )
-    val scrollState = rememberSaveable(x1, saver = ScrollState.Saver) { ScrollState(initial = 0) }
-    return scrollBehavior to scrollState
+    return rememberSaveable(x1, saver = ScrollState.Saver) { ScrollState(initial = 0) }
 }
 
 @Composable
@@ -136,8 +118,7 @@ fun LazyListState.isAtBottom(): androidx.compose.runtime.State<Boolean> = rememb
     }
 }
 
-
-val TopAppBarScrollBehavior.isFullVisible: Boolean
+val ScrollBehavior.isFullVisible: Boolean
     @Composable
     @ReadOnlyComposable
     get() = state.collapsedFraction == 0f
@@ -148,7 +129,7 @@ fun Modifier.textSize(
     style: TextStyle = LocalTextStyle.current,
     density: Density = LocalDensity.current,
 ): Modifier {
-    val fontSizeDp = density.run { style.fontSize.toDp() }
-    val lineHeightDp = density.run { style.lineHeight.toDp() }
+    val fontSizeDp = style.fontSize.toSpDpOr(density, fallback = 14.dp)
+    val lineHeightDp = style.lineHeightDp(density)
     return height(lineHeightDp).width(fontSizeDp)
 }

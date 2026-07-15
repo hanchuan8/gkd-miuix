@@ -16,11 +16,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material3.AlertDialog
+import li.songe.gkd.ui.component.PerfAlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
@@ -32,7 +31,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
@@ -51,18 +49,17 @@ import li.songe.gkd.MainActivity
 import li.songe.gkd.data.A11yEventLog
 import li.songe.gkd.db.DbSet
 import li.songe.gkd.ui.component.AppNameText
+import li.songe.gkd.ui.component.AppPageScaffold
 import li.songe.gkd.ui.component.EmptyText
 import li.songe.gkd.ui.component.FixedTimeText
 import li.songe.gkd.ui.component.LocalNumberCharWidth
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
-import li.songe.gkd.ui.component.PerfTopAppBar
 import li.songe.gkd.ui.component.measureNumberTextWidth
 import li.songe.gkd.ui.component.useListScrollState
 import li.songe.gkd.ui.component.waitResult
 import li.songe.gkd.ui.share.ListPlaceholder
 import li.songe.gkd.ui.share.LocalDarkTheme
-import li.songe.gkd.ui.share.noRippleClickable
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.getJson5AnnotatedString
 import li.songe.gkd.ui.style.iconTextSize
@@ -85,40 +82,32 @@ fun A11yEventLogPage() {
 
     val logCount by vm.logCountFlow.collectAsState()
     val list = vm.pagingDataFlow.collectAsLazyPagingItems()
-    val (scrollBehavior, listState) = useListScrollState(vm.resetKey, list.itemCount > 0)
+    val listState = useListScrollState(list.itemCount > 0)
 
-    Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection), topBar = {
-        PerfTopAppBar(
-            scrollBehavior = scrollBehavior,
-            navigationIcon = {
-                PerfIconButton(imageVector = PerfIcon.ArrowBack, onClick = {
-                    mainVm.popPage()
-                })
-            },
-            title = {
-                Text(
-                    text = "事件日志",
-                    modifier = Modifier.noRippleClickable { vm.resetKey.intValue++ },
+    AppPageScaffold(
+        title = "事件日志",
+        navigationIcon = {
+            PerfIconButton(imageVector = PerfIcon.ArrowBack, onClick = {
+                mainVm.popPage()
+            })
+        },
+        actions = {
+            if (logCount > 0) {
+                PerfIconButton(
+                    imageVector = PerfIcon.Delete,
+                    onClick = throttle(fn = vm.viewModelScope.launchAsFn {
+                        mainVm.dialogFlow.waitResult(
+                            title = "删除日志",
+                            text = "确定删除所有事件日志?",
+                            error = true,
+                        )
+                        DbSet.a11yEventLogDao.deleteAll()
+                        toast("删除成功")
+                    })
                 )
-            },
-            actions = {
-                if (logCount > 0) {
-                    PerfIconButton(
-                        imageVector = PerfIcon.Delete,
-                        onClick = throttle(fn = vm.viewModelScope.launchAsFn {
-                            mainVm.dialogFlow.waitResult(
-                                title = "删除日志",
-                                text = "确定删除所有事件日志?",
-                                error = true,
-                            )
-                            DbSet.a11yEventLogDao.deleteAll()
-                            toast("删除成功")
-                        })
-                    )
-                }
             }
-        )
-    }) { contentPadding ->
+        },
+    ) { contentPadding ->
         CompositionLocalProvider(
             LocalNumberCharWidth provides measureNumberTextWidth(),
         ) {
@@ -168,7 +157,7 @@ fun A11yEventLogPage() {
                 dark,
             )
         }
-        AlertDialog(
+        PerfAlertDialog(
             onDismissRequest = onDismissRequest,
             title = { Text(text = "事件详情") },
             text = {
@@ -243,9 +232,11 @@ fun A11yEventLogPage() {
                 }
             },
             confirmButton = {
-                TextButton(onClick = onDismissRequest) {
-                    Text(text = "关闭")
-                }
+                TextButton(
+                    text = "关闭",
+                    onClick = onDismissRequest,
+                    modifier = Modifier.weight(1f),
+                )
             },
         )
     }

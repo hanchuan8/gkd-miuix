@@ -62,7 +62,7 @@ plugins {
 android {
     namespace = "li.songe.gkd"
     defaultConfig {
-        applicationId = "li.songe.gkd"
+        applicationId = "li.songe.gkdx"
         versionCode = 92
         versionName = "1.12.1"
 
@@ -128,9 +128,7 @@ android {
             signingConfig = gkdSigningConfig
             applicationIdSuffix = ".debug"
             resValue("color", "better_black", "#FF5D92")
-            debugSuffixPairList.onEach { (key, value) ->
-                resValue("string", key, "$value-debug")
-            }
+            // 不再给应用名/快捷方式追加 -debug 字样
         }
     }
     productFlavors {
@@ -268,4 +266,9 @@ dependencies {
     compileOnly(libs.loc.annotation)
 
     implementation(libs.kevinnzouWebview)
+
+    implementation(libs.miuix.ui)
+    implementation(libs.miuix.preference)
+    implementation(libs.miuix.icons)
+    implementation(libs.miuix.blur)
 }

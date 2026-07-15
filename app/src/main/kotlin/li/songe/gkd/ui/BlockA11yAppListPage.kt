@@ -12,11 +12,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.IconButton
+import li.songe.gkd.ui.component.PerfDropdownMenu
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -59,7 +57,6 @@ import li.songe.gkd.ui.icon.LockOpenRight
 import li.songe.gkd.ui.share.ListPlaceholder
 import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.ui.share.asMutableState
-import li.songe.gkd.ui.share.noRippleClickable
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.scaffoldPadding
 import li.songe.gkd.util.AppGroupOption
@@ -69,6 +66,9 @@ import li.songe.gkd.util.launchAsFn
 import li.songe.gkd.util.switchItem
 import li.songe.gkd.util.throttle
 import li.songe.gkd.util.toast
+import top.yukonga.miuix.kmp.basic.IconButton
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.Scaffold
 
 @Serializable
 data object BlockA11yAppListRoute : NavKey
@@ -83,7 +83,8 @@ fun BlockA11yAppListPage() {
     val searchStr by vm.searchStrFlow.collectAsState()
     var showSearchBar by vm.showSearchBarFlow.asMutableState()
     var editable by vm.editableFlow.asMutableState()
-    val (scrollBehavior, listState) = useListScrollState(vm.resetKey, canScroll = { !editable })
+    val listState = useListScrollState(vm.resetKey, canScroll = { !editable })
+    val miuixScrollBehavior = MiuixScrollBehavior()
     BackHandler(editable, vm.viewModelScope.launchAsFn {
         context.justHideSoftInput()
         if (vm.textChanged) {
@@ -95,10 +96,19 @@ fun BlockA11yAppListPage() {
         editable = false
     })
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = Modifier.nestedScroll(miuixScrollBehavior.nestedScrollConnection),
         topBar = {
+            if (showSearchBar) {
+                BackHandler {
+                    if (!context.justHideSoftInput()) {
+                        showSearchBar = false
+                    }
+                }
+            }
+            val firstShowSearchBar = remember { showSearchBar }
             PerfTopAppBar(
-                scrollBehavior = scrollBehavior,
+                titleText = if (showSearchBar) "" else "无障碍白名单",
+                miuixScrollBehavior = miuixScrollBehavior,
                 canScroll = !editable && !store.blockA11yAppListFollowMatch,
                 navigationIcon = {
                     IconButton(
@@ -121,14 +131,8 @@ fun BlockA11yAppListPage() {
                         BackCloseIcon(backOrClose = !editable)
                     }
                 },
-                title = {
-                    val firstShowSearchBar = remember { showSearchBar }
+                bottomContent = {
                     if (showSearchBar) {
-                        BackHandler {
-                            if (!context.justHideSoftInput()) {
-                                showSearchBar = false
-                            }
-                        }
                         AppBarTextField(
                             value = searchStr,
                             onValueChange = { newValue ->
@@ -136,17 +140,6 @@ fun BlockA11yAppListPage() {
                             },
                             hint = "请输入应用名称/ID",
                             modifier = if (firstShowSearchBar) Modifier else Modifier.autoFocus(),
-                        )
-                    } else {
-                        val titleModifier = Modifier
-                            .noRippleClickable(
-                                onClick = throttle {
-                                    vm.resetKey.intValue++
-                                }
-                            )
-                        Text(
-                            modifier = titleModifier,
-                            text = "无障碍白名单",
                         )
                     }
                 },
@@ -210,7 +203,7 @@ fun BlockA11yAppListPage() {
                                     modifier = Modifier
                                         .wrapContentSize(Alignment.TopStart)
                                 ) {
-                                    DropdownMenu(
+                                    PerfDropdownMenu(
                                         expanded = expanded,
                                         onDismissRequest = { expanded = false }
                                     ) {
@@ -245,7 +238,7 @@ fun BlockA11yAppListPage() {
         },
         floatingActionButton = {
             AnimationFloatingActionButton(
-                visible = !editable && scrollBehavior.isFullVisible && !store.blockA11yAppListFollowMatch,
+                visible = !editable && miuixScrollBehavior.isFullVisible && !store.blockA11yAppListFollowMatch,
                 onClickLabel = "进入白名单文本编辑模式",
                 onClick = {
                     editable = !editable

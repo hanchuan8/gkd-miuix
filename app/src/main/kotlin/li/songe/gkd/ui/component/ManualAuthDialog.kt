@@ -9,11 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +21,9 @@ import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.util.ShortUrlSet
 import li.songe.gkd.util.copyText
 import li.songe.gkd.util.throttle
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextButton
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun ManualAuthDialog(
@@ -33,7 +33,7 @@ fun ManualAuthDialog(
 ) {
     if (show) {
         val mainVm = LocalMainViewModel.current
-        AlertDialog(
+        PerfAlertDialog(
             onDismissRequest = { onUpdateShow(false) },
             title = { Text(text = "命令授权") },
             text = {
@@ -51,10 +51,10 @@ fun ManualAuthDialog(
                             Text(
                                 text = commandText,
                                 modifier = Modifier
-                                    .clip(MaterialTheme.shapes.extraSmall)
-                                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(MiuixTheme.colorScheme.surfaceContainerHigh)
                                     .padding(8.dp),
-                                style = MaterialTheme.typography.bodySmall,
+                                style = MiuixTheme.textStyles.body2,
                             )
                         }
                         PerfIcon(
@@ -66,7 +66,7 @@ fun ManualAuthDialog(
                                 .padding(4.dp)
                                 .size(20.dp),
                             imageVector = PerfIcon.ContentCopy,
-                            tint = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.75f),
+                            tint = MiuixTheme.colorScheme.onSurfaceVariantSummary.copy(alpha = 0.75f),
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))
@@ -77,17 +77,19 @@ fun ManualAuthDialog(
                                 mainVm.navigatePage(WebViewRoute(initUrl = ShortUrlSet.URL3))
                             }),
                         text = "运行后授权失败?",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
+                        style = MiuixTheme.textStyles.body2,
+                        color = MiuixTheme.colorScheme.primary,
                     )
                 }
             },
             confirmButton = {
-                TextButton(onClick = {
-                    onUpdateShow(false)
-                }) {
-                    Text(text = "关闭")
-                }
+                TextButton(
+                    text = "关闭",
+                    onClick = {
+                        onUpdateShow(false)
+                    },
+                    modifier = Modifier.weight(1f),
+                )
             },
         )
     }

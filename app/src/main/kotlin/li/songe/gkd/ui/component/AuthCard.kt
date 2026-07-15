@@ -4,15 +4,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import li.songe.gkd.ui.style.itemPadding
 import li.songe.gkd.util.throttle
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextButton
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun AuthCard(
@@ -27,19 +27,17 @@ fun AuthCard(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MiuixTheme.textStyles.body1,
             )
-            if (subtitle!=null) {
+            if (subtitle != null) {
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MiuixTheme.textStyles.body2,
+                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                 )
             }
         }
         Spacer(modifier = Modifier.width(8.dp))
-        OutlinedButton(onClick = throttle(fn = onAuthClick)) {
-            Text(text = "授权")
-        }
+        TextButton(text = "授权", onClick = throttle(fn = onAuthClick))
     }
 }

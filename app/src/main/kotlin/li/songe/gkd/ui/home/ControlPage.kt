@@ -2,7 +2,6 @@ package li.songe.gkd.ui.home
 
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,15 +10,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -29,7 +22,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.onClick
@@ -61,21 +53,24 @@ import li.songe.gkd.ui.WebViewRoute
 import li.songe.gkd.ui.component.GroupNameText
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
-import li.songe.gkd.ui.component.PerfSwitch
 import li.songe.gkd.ui.component.PerfTopAppBar
+import li.songe.gkd.ui.component.PreferenceGroup
+import li.songe.gkd.ui.component.SettingItem
+import li.songe.gkd.ui.component.TextSwitch
 import li.songe.gkd.ui.component.textSize
 import li.songe.gkd.ui.component.useScrollBehaviorState
 import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.ui.style.EmptyHeight
-import li.songe.gkd.ui.style.itemHorizontalPadding
-import li.songe.gkd.ui.style.itemVerticalPadding
-import li.songe.gkd.ui.style.surfaceCardColors
 import li.songe.gkd.util.HOME_PAGE_URL
 import li.songe.gkd.util.ShortUrlSet
 import li.songe.gkd.util.latestRecordDescFlow
 import li.songe.gkd.util.latestRecordFlow
 import li.songe.gkd.util.launchAsFn
 import li.songe.gkd.util.throttle
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.CardDefaults
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun useControlPage(): ScaffoldExt {
@@ -83,7 +78,9 @@ fun useControlPage(): ScaffoldExt {
     val mainVm = LocalMainViewModel.current
     val vm = viewModel<HomeVm>()
     val scrollKey = rememberSaveable { mutableIntStateOf(0) }
-    val (scrollBehavior, scrollState) = useScrollBehaviorState(scrollKey)
+    val scrollState = useScrollBehaviorState(scrollKey)
+    val miuixScrollBehavior = MiuixScrollBehavior()
+    val appTitle = stringResource(R.string.app_name)
     LaunchedEffect(null) {
         mainVm.resetPageScrollEvent.collect {
             if (it == BottomNavItem.Control) {
@@ -93,45 +90,49 @@ fun useControlPage(): ScaffoldExt {
     }
     return ScaffoldExt(
         navItem = BottomNavItem.Control,
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = Modifier.nestedScroll(miuixScrollBehavior.nestedScrollConnection),
         topBar = {
-            PerfTopAppBar(scrollBehavior = scrollBehavior, title = {
-                Text(
-                    text = stringResource(R.string.app_name)
-                )
-            }, actions = {
-                PerfIconButton(
-                    imageVector = PerfIcon.RocketLaunch,
-                    onClickLabel = "前往工作模式页面",
-                    contentDescription = "工作模式",
-                    onClick = throttle {
-                        mainVm.navigatePage(AuthA11yRoute)
-                    },
-                )
-            })
-        }) { contentPadding ->
+            PerfTopAppBar(
+                titleText = appTitle,
+                miuixScrollBehavior = miuixScrollBehavior,
+                actions = {
+                    PerfIconButton(
+                        imageVector = PerfIcon.RocketLaunch,
+                        onClickLabel = "前往工作模式页面",
+                        contentDescription = "工作模式",
+                        onClick = throttle {
+                            mainVm.navigatePage(AuthA11yRoute)
+                        },
+                    )
+                },
+            )
+        },
+    ) { contentPadding ->
         val store by storeFlow.collectAsState()
 
         val a11yRunning by A11yService.isRunning.collectAsState()
         val manageRunning by StatusService.isRunning.collectAsState()
         val writeSecureSettings by writeSecureSettingsState.stateFlow.collectAsState()
+        val appOpsRestricted by appOpsRestrictedFlow.collectAsState()
 
         Column(
             modifier = Modifier
                 .verticalScroll(scrollState)
-                .padding(contentPadding)
-                .padding(horizontal = itemHorizontalPadding),
-            verticalArrangement = Arrangement.spacedBy(itemHorizontalPadding / 2)
+                .padding(contentPadding),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            if (appOpsRestrictedFlow.collectAsState().value) {
+            if (appOpsRestricted) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 4.dp)
                         .semantics(mergeDescendants = true) {
                             this.onClick(label = "前往解除限制页面", action = null)
                         },
-                    shape = MaterialTheme.shapes.large,
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                    colors = CardDefaults.defaultColors(
+                        color = MiuixTheme.colorScheme.errorContainer,
+                        contentColor = MiuixTheme.colorScheme.onErrorContainer,
+                    ),
                     onClick = throttle {
                         mainVm.navigateWebPage(ShortUrlSet.URL2)
                     },
@@ -139,331 +140,196 @@ fun useControlPage(): ScaffoldExt {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(itemVerticalPadding),
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        PerfIcon(imageVector = PerfIcon.WarningAmber)
+                        PerfIcon(
+                            imageVector = PerfIcon.WarningAmber,
+                            tint = MiuixTheme.colorScheme.onErrorContainer,
+                        )
                         Text(
                             modifier = Modifier.weight(1f),
                             text = "检测到权限受限制，请前往解除",
-                            style = MaterialTheme.typography.bodyLarge,
+                            style = MiuixTheme.textStyles.body1,
+                            color = MiuixTheme.colorScheme.onErrorContainer,
                         )
-                        PerfIcon(imageVector = PerfIcon.KeyboardArrowRight)
+                        PerfIcon(
+                            imageVector = PerfIcon.KeyboardArrowRight,
+                            tint = MiuixTheme.colorScheme.onErrorContainer,
+                        )
                     }
                 }
             }
-            if (store.useA11y || actualA11yScopeAppList.contains(topAppIdFlow.collectAsState().value)) {
-                PageSwitchItemCard(
-                    imageVector = PerfIcon.Memory,
-                    title = "服务状态",
-                    subtitle = if (a11yRunning) {
-                        "无障碍正在运行"
-                    } else if (mainVm.a11yServiceEnabledFlow.collectAsState().value) {
-                        "无障碍发生故障"
-                    } else if (writeSecureSettings) {
-                        if (store.enableAutomator && a11yPartDisabledFlow.collectAsState().value) {
-                            "无障碍局部关闭"
+
+            PreferenceGroup(title = "服务", showTop = appOpsRestricted) {
+                if (store.useA11y || actualA11yScopeAppList.contains(topAppIdFlow.collectAsState().value)) {
+                    TextSwitch(
+                        title = "服务状态",
+                        subtitle = if (a11yRunning) {
+                            "无障碍正在运行"
+                        } else if (mainVm.a11yServiceEnabledFlow.collectAsState().value) {
+                            "无障碍发生故障"
+                        } else if (writeSecureSettings) {
+                            if (store.enableAutomator && a11yPartDisabledFlow.collectAsState().value) {
+                                "无障碍局部关闭"
+                            } else {
+                                "无障碍已关闭"
+                            }
                         } else {
-                            "无障碍已关闭"
-                        }
-                    } else {
-                        "无障碍未授权"
-                    },
-                    checked = a11yRunning,
-                    onCheckedChange = { newEnabled ->
-                        if (newEnabled && !writeSecureSettingsState.value) {
-                            mainVm.navigatePage(AuthA11yRoute)
+                            "无障碍未授权"
+                        },
+                        checked = a11yRunning,
+                        onCheckedChange = { newEnabled ->
+                            if (newEnabled && !writeSecureSettingsState.value) {
+                                mainVm.navigatePage(AuthA11yRoute)
+                            } else {
+                                switchAutomatorService()
+                            }
+                        },
+                    )
+                } else {
+                    TextSwitch(
+                        title = "服务状态",
+                        subtitle = if (uiAutomationFlow.collectAsState().value != null) {
+                            "自动化正在运行"
+                        } else if (!shizukuContextFlow.collectAsState().value.ok) {
+                            "自动化未授权"
                         } else {
+                            if (store.enableAutomator && a11yPartDisabledFlow.collectAsState().value) {
+                                "自动化局部关闭"
+                            } else {
+                                "自动化已关闭"
+                            }
+                        },
+                        checked = uiAutomationFlow.collectAsState().value != null,
+                        onCheckedChange = vm.viewModelScope.launchAsFn(Dispatchers.IO) { newEnabled ->
+                            if (newEnabled) {
+                                mainVm.guardShizukuContext()
+                            }
                             switchAutomatorService()
-                        }
-                    },
-                )
-            } else {
-                PageSwitchItemCard(
-                    imageVector = PerfIcon.Memory,
-                    title = "服务状态",
-                    subtitle = if (uiAutomationFlow.collectAsState().value != null) {
-                        "自动化正在运行"
-                    } else if (!shizukuContextFlow.collectAsState().value.ok) {
-                        "自动化未授权"
-                    } else {
-                        if (store.enableAutomator && a11yPartDisabledFlow.collectAsState().value) {
-                            "自动化局部关闭"
+                        },
+                    )
+                }
+
+                TextSwitch(
+                    title = "常驻通知",
+                    subtitle = "显示运行状态及统计数据",
+                    checked = manageRunning && store.enableStatusService,
+                    onCheckedChange = vm.viewModelScope.launchAsFn<Boolean> {
+                        if (it) {
+                            StatusService.requestStart(context)
                         } else {
-                            "自动化已关闭"
+                            StatusService.stop()
+                            storeFlow.value = store.copy(
+                                enableStatusService = false
+                            )
                         }
-                    },
-                    checked = uiAutomationFlow.collectAsState().value != null,
-                    onCheckedChange = vm.viewModelScope.launchAsFn(Dispatchers.IO) { newEnabled ->
-                        if (newEnabled) {
-                            mainVm.guardShizukuContext()
-                        }
-                        switchAutomatorService()
                     },
                 )
             }
 
-            PageSwitchItemCard(
-                imageVector = PerfIcon.Notifications,
-                title = "常驻通知",
-                subtitle = "显示运行状态及统计数据",
-                checked = manageRunning && store.enableStatusService,
-                onCheckedChange = vm.viewModelScope.launchAsFn<Boolean> {
-                    if (it) {
-                        StatusService.requestStart(context)
-                    } else {
-                        StatusService.stop()
-                        storeFlow.value = store.copy(
-                            enableStatusService = false
-                        )
-                    }
-                },
-            )
+            ServerStatusSection()
 
-            ServerStatusCard()
-
-            PageItemCard(
-                title = "触发记录",
-                subtitle = "规则误触可定位关闭",
-                imageVector = PerfIcon.History,
-                onClickLabel = "打开触发记录页面",
-                onClick = {
-                    mainVm.navigatePage(ActionLogRoute())
-                })
-
-            if (ActivityService.isRunning.collectAsState().value) {
-                PageItemCard(
-                    title = "界面日志",
-                    subtitle = "记录打开的应用及界面",
-                    imageVector = PerfIcon.Layers,
-                    onClickLabel = "打开界面日志页面",
+            PreferenceGroup(title = "快捷入口") {
+                SettingItem(
+                    title = "触发记录",
+                    subtitle = "规则误触可定位关闭",
+                    onClickLabel = "打开触发记录页面",
                     onClick = {
-                        mainVm.navigatePage(ActivityLogRoute)
-                    })
+                        mainVm.navigatePage(ActionLogRoute())
+                    },
+                )
+
+                if (ActivityService.isRunning.collectAsState().value) {
+                    SettingItem(
+                        title = "界面日志",
+                        subtitle = "记录打开的应用及界面",
+                        onClickLabel = "打开界面日志页面",
+                        onClick = {
+                            mainVm.navigatePage(ActivityLogRoute)
+                        },
+                    )
+                }
+
+                SettingItem(
+                    title = "了解 GKD-X",
+                    subtitle = "查阅规则文档和常见问题",
+                    onClickLabel = "打开规则文档页面",
+                    onClick = {
+                        mainVm.navigatePage(WebViewRoute(initUrl = HOME_PAGE_URL))
+                    },
+                )
             }
 
-            PageItemCard(
-                title = "了解 GKD",
-                subtitle = "查阅规则文档和常见问题",
-                imageVector = PerfIcon.HelpOutline,
-                onClickLabel = "打开 GKD 文档页面",
-                onClick = {
-                    mainVm.navigatePage(WebViewRoute(initUrl = HOME_PAGE_URL))
-                })
             Spacer(modifier = Modifier.height(EmptyHeight))
         }
     }
 }
 
-
 @Composable
-private fun PageItemCard(
-    imageVector: ImageVector,
-    title: String,
-    subtitle: String,
-    onClickLabel: String,
-    onClick: () -> Unit,
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .semantics {
-                this.onClick(label = onClickLabel, action = null)
-            },
-        shape = MaterialTheme.shapes.large,
-        colors = surfaceCardColors,
-        onClick = throttle(fn = onClick)
-    ) {
-        IconTextCard(
-            imageVector = imageVector,
-        ) {
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun PageSwitchItemCard(
-    imageVector: ImageVector,
-    title: String,
-    subtitle: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-) {
-    val onClick = throttle { onCheckedChange(!checked) }
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .semantics(mergeDescendants = true) {
-                this.onClick(label = "切换$title", action = null)
-            },
-        shape = MaterialTheme.shapes.large,
-        colors = surfaceCardColors,
-        onClick = onClick,
-    ) {
-        IconTextCard(
-            imageVector = imageVector,
-        ) {
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Spacer(Modifier.width(8.dp))
-            PerfSwitch(
-                checked = checked,
-                onCheckedChange = null,
-            )
-        }
-    }
-}
-
-@Composable
-private fun IconTextCard(
-    imageVector: ImageVector, content: @Composable () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(itemVerticalPadding),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        PerfIcon(
-            imageVector = imageVector,
-            modifier = Modifier
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer)
-                .padding(8.dp)
-                .size(24.dp),
-            tint = MaterialTheme.colorScheme.primary,
-            contentDescription = null,
-        )
-        Spacer(modifier = Modifier.width(itemHorizontalPadding))
-        content()
-    }
-}
-
-@Composable
-private fun ServerStatusCard() {
+private fun ServerStatusSection() {
     val mainVm = LocalMainViewModel.current
     val vm = viewModel<HomeVm>()
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .semantics {
-                onClick(label = "不执行操作", action = null)
-            }, shape = RoundedCornerShape(20.dp), colors = surfaceCardColors, onClick = {}) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    start = itemVerticalPadding,
-                    end = itemVerticalPadding,
-                    top = itemVerticalPadding,
-                    bottom = itemVerticalPadding / 2
-                ), verticalAlignment = Alignment.CenterVertically
-        ) {
-            PerfIcon(
-                imageVector = PerfIcon.Equalizer,
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer)
-                    .padding(8.dp)
-                    .size(24.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.width(itemHorizontalPadding))
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                Text(
-                    text = "数据概览",
-                    style = MaterialTheme.typography.bodyLarge,
-                )
-                val usedSubsItemCount by vm.usedSubsItemCountFlow.collectAsState()
-                AnimatedVisibility(usedSubsItemCount > 0) {
-                    Text(
-                        text = "已开启 $usedSubsItemCount 条订阅",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        }
+    val usedSubsItemCount by vm.usedSubsItemCountFlow.collectAsState()
+    val subsStatus by vm.subsStatusFlow.collectAsState()
+    val latestRecordDesc by latestRecordDescFlow.collectAsState()
+    val latestRecord by latestRecordFlow.collectAsState()
+
+    PreferenceGroup(title = "数据概览") {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = itemVerticalPadding)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            val subsStatus by vm.subsStatusFlow.collectAsState()
-            AnimatedVisibility(subsStatus.isNotEmpty()) {
+            AnimatedVisibility(usedSubsItemCount > 0) {
                 Text(
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                    text = subsStatus,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = "已开启 $usedSubsItemCount 条订阅",
+                    style = MiuixTheme.textStyles.body2,
+                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                 )
             }
-
-            val latestRecordDesc by latestRecordDescFlow.collectAsState()
+            AnimatedVisibility(subsStatus.isNotEmpty()) {
+                Text(
+                    text = subsStatus,
+                    style = MiuixTheme.textStyles.body2,
+                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                )
+            }
             if (latestRecordDesc != null) {
                 Row(
                     modifier = Modifier
-                        .padding(horizontal = 4.dp)
-                        .clip(MaterialTheme.shapes.extraSmall)
+                        .clip(RoundedCornerShape(8.dp))
                         .clickable(onClickLabel = "前往应用的规则汇总页面", onClick = throttle {
-                            latestRecordFlow.value?.let {
+                            latestRecord?.let {
                                 mainVm.navigatePage(
                                     AppConfigRoute(
-                                        appId = it.appId, focusLog = it
+                                        appId = it.appId,
+                                        focusLog = it,
                                     )
                                 )
                             }
                         })
                         .fillMaxWidth()
-                        .padding(horizontal = 4.dp)
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Column(
+                    GroupNameText(
                         modifier = Modifier.weight(1f),
-                    ) {
-                        GroupNameText(
-                            modifier = Modifier.fillMaxWidth(),
-                            preText = "最近触发: ",
-                            isGlobal = latestRecordFlow.collectAsState().value?.groupType == SubsConfig.GlobalGroupType,
-                            text = latestRecordDesc ?: "",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                    }
+                        preText = "最近触发: ",
+                        isGlobal = latestRecord?.groupType == SubsConfig.GlobalGroupType,
+                        text = latestRecordDesc ?: "",
+                        style = MiuixTheme.textStyles.body2,
+                        color = MiuixTheme.colorScheme.primary,
+                    )
                     PerfIcon(
                         imageVector = PerfIcon.KeyboardArrowRight,
-                        modifier = Modifier.textSize(style = MaterialTheme.typography.bodyMedium),
-                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.textSize(style = MiuixTheme.textStyles.body2),
+                        tint = MiuixTheme.colorScheme.primary,
                     )
                 }
             }
-            Spacer(modifier = Modifier.height(itemVerticalPadding))
         }
     }
 }

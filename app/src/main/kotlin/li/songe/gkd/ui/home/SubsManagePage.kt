@@ -10,22 +10,20 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import li.songe.gkd.ui.component.PerfDropdownMenu
+import li.songe.gkd.ui.component.PerfDropdownMenuItem
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -40,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -52,19 +51,19 @@ import li.songe.gkd.store.switchStoreEnableMatch
 import li.songe.gkd.ui.SlowGroupRoute
 import li.songe.gkd.ui.UpsertRuleGroupRoute
 import li.songe.gkd.ui.WebViewRoute
-import li.songe.gkd.ui.component.AnimationFloatingActionButton
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
 import li.songe.gkd.ui.component.PerfTopAppBar
 import li.songe.gkd.ui.component.ScaffoldDialog
 import li.songe.gkd.ui.component.SubsItemCard
+import li.songe.gkd.ui.component.PreferenceGroup
 import li.songe.gkd.ui.component.TextMenu
 import li.songe.gkd.ui.component.TextSwitch
 import li.songe.gkd.ui.component.usePinnedScrollBehaviorState
 import li.songe.gkd.ui.component.waitResult
 import li.songe.gkd.ui.share.ListPlaceholder
 import li.songe.gkd.ui.share.LocalMainViewModel
-import li.songe.gkd.ui.style.EmptyHeight
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import li.songe.gkd.util.LOCAL_SUBS_ID
 import li.songe.gkd.util.ShortUrlSet
 import li.songe.gkd.util.UpdateTimeOption
@@ -101,7 +100,6 @@ fun useSubsManagePage(): ScaffoldExt {
     }
 
     val refreshing by updateSubsMutex.state.collectAsState()
-    val pullToRefreshState = rememberPullToRefreshState()
     var isSelectedMode by remember { mutableStateOf(false) }
     var selectedIds by remember { mutableStateOf(emptySet<Long>()) }
     val draggedFlag = remember { Value(false) }
@@ -126,26 +124,29 @@ fun useSubsManagePage(): ScaffoldExt {
             title = "订阅设置",
             content = {
                 val store by storeFlow.collectAsState()
-                TextMenu(
-                    title = "更新订阅",
-                    option = UpdateTimeOption.objects.findOption(store.updateSubsInterval)
-                ) {
-                    storeFlow.update { s -> s.copy(updateSubsInterval = it.value) }
-                }
-                TextSwitch(
-                    title = "耗电警告",
-                    subtitle = "启用多条订阅时弹窗确认",
-                    checked = store.subsPowerWarn,
-                    onCheckedChange = throttle<Boolean> {
-                        storeFlow.update { s -> s.copy(subsPowerWarn = it) }
+                PreferenceGroup(title = null, showTop = false) {
+                    TextMenu(
+                        title = "更新订阅",
+                        option = UpdateTimeOption.objects.findOption(store.updateSubsInterval)
+                    ) {
+                        storeFlow.update { s -> s.copy(updateSubsInterval = it.value) }
                     }
-                )
+                    TextSwitch(
+                        title = "耗电警告",
+                        subtitle = "启用多条订阅时弹窗确认",
+                        checked = store.subsPowerWarn,
+                        onCheckedChange = throttle<Boolean> {
+                            storeFlow.update { s -> s.copy(subsPowerWarn = it) }
+                        }
+                    )
+                }
             }
         )
     }
 
     val scrollKey = rememberSaveable { mutableIntStateOf(0) }
-    val (scrollBehavior, lazyListState) = usePinnedScrollBehaviorState(scrollKey)
+    val lazyListState = usePinnedScrollBehaviorState(scrollKey)
+    val miuixScrollBehavior = MiuixScrollBehavior()
     LaunchedEffect(null) {
         mainVm.resetPageScrollEvent.collect {
             if (it == BottomNavItem.SubsManage) {
@@ -153,26 +154,24 @@ fun useSubsManagePage(): ScaffoldExt {
             }
         }
     }
+    val titleText = if (isSelectedMode) {
+        if (selectedIds.isNotEmpty()) selectedIds.size.toString() else ""
+    } else {
+        BottomNavItem.SubsManage.label
+    }
     return ScaffoldExt(
         navItem = BottomNavItem.SubsManage,
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = Modifier.nestedScroll(miuixScrollBehavior.nestedScrollConnection),
         topBar = {
-            PerfTopAppBar(scrollBehavior = scrollBehavior, navigationIcon = {
+            PerfTopAppBar(
+                titleText = titleText,
+                miuixScrollBehavior = miuixScrollBehavior,
+                navigationIcon = {
                 if (isSelectedMode) {
                     PerfIconButton(
                         imageVector = PerfIcon.Close,
                         contentDescription = "取消选择",
                         onClick = { isSelectedMode = false },
-                    )
-                }
-            }, title = {
-                if (isSelectedMode) {
-                    Text(
-                        text = if (selectedIds.isNotEmpty()) selectedIds.size.toString() else "",
-                    )
-                } else {
-                    Text(
-                        text = BottomNavItem.SubsManage.label,
                     )
                 }
             }, actions = {
@@ -211,6 +210,35 @@ fun useSubsManagePage(): ScaffoldExt {
                                 )
                             }
                         } else {
+                            PerfIconButton(
+                                imageVector = PerfIcon.Autorenew,
+                                contentDescription = if (refreshing) "正在刷新订阅" else "刷新订阅",
+                                onClickLabel = "刷新订阅",
+                                enabled = !refreshing,
+                                onClick = throttle {
+                                    if (updateSubsMutex.mutex.isLocked) {
+                                        toast("正在刷新订阅,请稍后操作")
+                                    } else {
+                                        checkSubsUpdate(true)
+                                    }
+                                },
+                            )
+                            PerfIconButton(
+                                imageVector = PerfIcon.Add,
+                                contentDescription = "添加订阅",
+                                onClickLabel = "打开添加订阅弹窗",
+                                onClick = throttle {
+                                    if (updateSubsMutex.mutex.isLocked) {
+                                        toast("正在刷新订阅,请稍后操作")
+                                    } else {
+                                        mainVm.viewModelScope.launchTry {
+                                            val url = mainVm.inputSubsLinkOption.getResult()
+                                                ?: return@launchTry
+                                            mainVm.addOrModifySubs(url)
+                                        }
+                                    }
+                                },
+                            )
                             val ruleSummary by ruleSummaryFlow.collectAsState()
                             AnimatedVisibility(
                                 visible = ruleSummary.slowGroupCount > 0,
@@ -252,38 +280,34 @@ fun useSubsManagePage(): ScaffoldExt {
                         }
                     }
                 }
-                PerfIconButton(
-                    imageVector = PerfIcon.MoreVert,
-                    contentDescription = "更多操作",
-                    onClick = {
-                        if (updateSubsMutex.mutex.isLocked) {
-                            toast("正在刷新订阅，请稍后操作")
-                        } else {
-                            expanded = true
-                        }
-                    })
-                Box(
-                    modifier = Modifier.wrapContentSize(Alignment.TopStart)
-                ) {
-                    key(isSelectedMode) {
-                        DropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = { expanded = false }
-                        ) {
+                key(isSelectedMode) {
+                    PerfDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                        anchor = {
+                            PerfIconButton(
+                                imageVector = PerfIcon.MoreVert,
+                                contentDescription = "更多操作",
+                                onClick = {
+                                    if (updateSubsMutex.mutex.isLocked) {
+                                        toast("正在刷新订阅，请稍后操作")
+                                    } else {
+                                        expanded = true
+                                    }
+                                },
+                            )
+                        },
+                    ) {
                             if (isSelectedMode) {
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(text = "全选")
-                                    },
+                                PerfDropdownMenuItem(
+                                    text = "全选",
                                     onClick = {
                                         expanded = false
                                         selectedIds = subItems.map { it.id }.toSet()
                                     }
                                 )
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(text = "反选")
-                                    },
+                                PerfDropdownMenuItem(
+                                    text = "反选",
                                     onClick = {
                                         expanded = false
                                         val newSelectedIds =
@@ -295,8 +319,8 @@ fun useSubsManagePage(): ScaffoldExt {
                                     }
                                 )
                             } else {
-                                DropdownMenuItem(
-                                    text = { Text(text = "添加应用规则") },
+                                PerfDropdownMenuItem(
+                                    text = "添加应用规则",
                                     onClick = throttle {
                                         expanded = false
                                         mainVm.navigatePage(
@@ -309,8 +333,8 @@ fun useSubsManagePage(): ScaffoldExt {
                                         )
                                     },
                                 )
-                                DropdownMenuItem(
-                                    text = { Text(text = "添加全局规则") },
+                                PerfDropdownMenuItem(
+                                    text = "添加全局规则",
                                     onClick = throttle {
                                         expanded = false
                                         mainVm.navigatePage(
@@ -326,27 +350,9 @@ fun useSubsManagePage(): ScaffoldExt {
                             }
                         }
                     }
-                }
             })
         },
-        floatingActionButton = {
-            AnimationFloatingActionButton(
-                contentDescription = "添加订阅",
-                onClickLabel = "打开添加订阅弹窗",
-                visible = !isSelectedMode,
-                onClick = {
-                    if (updateSubsMutex.mutex.isLocked) {
-                        toast("正在刷新订阅,请稍后操作")
-                    } else {
-                        mainVm.viewModelScope.launchTry {
-                            val url = mainVm.inputSubsLinkOption.getResult() ?: return@launchTry
-                            mainVm.addOrModifySubs(url)
-                        }
-                    }
-                },
-                imageVector = PerfIcon.Add,
-            )
-        },
+        floatingActionButton = {},
     ) { contentPadding ->
         val reorderableLazyColumnState =
             rememberReorderableLazyListState(lazyListState) { from, to ->
@@ -360,16 +366,20 @@ fun useSubsManagePage(): ScaffoldExt {
                 }
                 draggedFlag.value = true
             }
-        PullToRefreshBox(
-            modifier = Modifier.padding(contentPadding),
-            state = pullToRefreshState,
-            isRefreshing = refreshing,
-            onRefresh = { checkSubsUpdate(true) }
+        // 顶距放进 LazyColumn.contentPadding，列表才能滚进顶栏下方，毛玻璃才能采样到内容
+        LazyColumn(
+            state = lazyListState,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    start = contentPadding.calculateStartPadding(LocalLayoutDirection.current),
+                    end = contentPadding.calculateEndPadding(LocalLayoutDirection.current),
+                ),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                top = contentPadding.calculateTopPadding(),
+                bottom = contentPadding.calculateBottomPadding(),
+            ),
         ) {
-            LazyColumn(
-                state = lazyListState,
-                modifier = Modifier.fillMaxSize(),
-            ) {
                 itemsIndexed(orderSubItems, { _, subItem -> subItem.id }) { index, subItem ->
                     val canDrag = !refreshing && orderSubItems.size > 1
                     ReorderableItem(
@@ -454,9 +464,7 @@ fun useSubsManagePage(): ScaffoldExt {
                         )
                     }
                 }
-                item(ListPlaceholder.KEY, ListPlaceholder.TYPE) {
-                    Spacer(modifier = Modifier.height(EmptyHeight))
-                }
+            item(ListPlaceholder.KEY, ListPlaceholder.TYPE) {
             }
         }
     }

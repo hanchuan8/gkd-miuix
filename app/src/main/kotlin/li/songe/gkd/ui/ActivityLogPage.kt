@@ -19,18 +19,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
@@ -44,18 +40,17 @@ import li.songe.gkd.MainActivity
 import li.songe.gkd.data.ActivityLog
 import li.songe.gkd.db.DbSet
 import li.songe.gkd.ui.component.AppNameText
+import li.songe.gkd.ui.component.AppPageScaffold
 import li.songe.gkd.ui.component.EmptyText
 import li.songe.gkd.ui.component.FixedTimeText
 import li.songe.gkd.ui.component.LocalNumberCharWidth
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
-import li.songe.gkd.ui.component.PerfTopAppBar
 import li.songe.gkd.ui.component.measureNumberTextWidth
 import li.songe.gkd.ui.component.useListScrollState
 import li.songe.gkd.ui.component.waitResult
 import li.songe.gkd.ui.share.ListPlaceholder
 import li.songe.gkd.ui.share.LocalMainViewModel
-import li.songe.gkd.ui.share.noRippleClickable
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.iconTextSize
 import li.songe.gkd.ui.style.itemHorizontalPadding
@@ -76,42 +71,33 @@ fun ActivityLogPage() {
 
     val logCount by vm.logCountFlow.collectAsState()
     val list = vm.pagingDataFlow.collectAsLazyPagingItems()
-    val resetKey = rememberSaveable { mutableIntStateOf(0) }
-    val (scrollBehavior, listState) = useListScrollState(resetKey, list.itemCount > 0)
+    val listState = useListScrollState(list.itemCount > 0)
     val timeTextWidth = measureNumberTextWidth(MaterialTheme.typography.bodySmall)
 
-    Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection), topBar = {
-        PerfTopAppBar(
-            scrollBehavior = scrollBehavior,
-            navigationIcon = {
-                PerfIconButton(imageVector = PerfIcon.ArrowBack, onClick = {
-                    mainVm.popPage()
-                })
-            },
-            title = {
-                Text(
-                    text = "界面日志",
-                    modifier = Modifier.noRippleClickable { resetKey.intValue++ },
+    AppPageScaffold(
+        title = "界面日志",
+        navigationIcon = {
+            PerfIconButton(imageVector = PerfIcon.ArrowBack, onClick = {
+                mainVm.popPage()
+            })
+        },
+        actions = {
+            if (logCount > 0) {
+                PerfIconButton(
+                    imageVector = PerfIcon.Delete,
+                    onClick = throttle(fn = vm.viewModelScope.launchAsFn {
+                        mainVm.dialogFlow.waitResult(
+                            title = "删除日志",
+                            text = "确定删除所有界面日志?",
+                            error = true,
+                        )
+                        DbSet.activityLogDao.deleteAll()
+                        toast("删除成功")
+                    })
                 )
-            },
-            actions = {
-                if (logCount > 0) {
-                    PerfIconButton(
-                        imageVector = PerfIcon.Delete,
-                        onClick = throttle(fn = vm.viewModelScope.launchAsFn {
-                            mainVm.dialogFlow.waitResult(
-                                title = "删除日志",
-                                text = "确定删除所有界面日志?",
-                                error = true,
-                            )
-                            DbSet.activityLogDao.deleteAll()
-                            toast("删除成功")
-                        })
-                    )
-                }
             }
-        )
-    }) { contentPadding ->
+        },
+    ) { contentPadding ->
         LazyColumn(
             modifier = Modifier.scaffoldPadding(contentPadding),
             state = listState,

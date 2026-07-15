@@ -16,7 +16,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -25,23 +24,22 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
+import li.songe.gkd.ui.component.PerfAlertDialog
+import androidx.compose.foundation.shape.RoundedCornerShape
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextButton
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
@@ -98,6 +96,8 @@ import li.songe.gkd.ui.BlockA11yAppListPage
 import li.songe.gkd.ui.BlockA11yAppListRoute
 import li.songe.gkd.ui.CrashReportPage
 import li.songe.gkd.ui.CrashReportRoute
+import li.songe.gkd.ui.DesignPage
+import li.songe.gkd.ui.DesignRoute
 import li.songe.gkd.ui.EditBlockAppListPage
 import li.songe.gkd.ui.EditBlockAppListRoute
 import li.songe.gkd.ui.ImagePreviewPage
@@ -130,11 +130,9 @@ import li.songe.gkd.ui.component.TermsAcceptDialog
 import li.songe.gkd.ui.component.TextDialog
 import li.songe.gkd.ui.home.HomePage
 import li.songe.gkd.ui.home.HomeRoute
-import li.songe.gkd.ui.share.FixedWindowInsets
 import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.ui.style.AppTheme
 import li.songe.gkd.util.AndroidTarget
-import li.songe.gkd.util.BarUtils
 import li.songe.gkd.util.EditGithubCookieDlg
 import li.songe.gkd.util.KeyboardUtils
 import li.songe.gkd.util.LogUtils
@@ -165,8 +163,6 @@ class MainActivity : ComponentActivity() {
     private val imeVisible: Boolean
         get() = ViewCompat.getRootWindowInsets(window.decorView)
             ?.isVisible(WindowInsetsCompat.Type.ime()) == true  // fix #1315
-
-    var topBarWindowInsets by mutableStateOf(WindowInsets(top = BarUtils.getStatusBarHeight()))
 
     private fun watchKeyboardVisible() {
         if (AndroidTarget.R) {
@@ -256,11 +252,6 @@ class MainActivity : ComponentActivity() {
             updateTopTaskAppId(META.appId)
         }
         setContent {
-            val latestInsets = TopAppBarDefaults.windowInsets
-            val density = LocalDensity.current
-            if (latestInsets.getTop(density) > topBarWindowInsets.getTop(density)) {
-                topBarWindowInsets = FixedWindowInsets(latestInsets)
-            }
             CompositionLocalProvider(
                 LocalMainViewModel provides mainVm
             ) {
@@ -276,6 +267,7 @@ class MainActivity : ComponentActivity() {
                             entry<HomeRoute> { HomePage() }
                             entry<AuthA11yRoute> { AuthA11yPage() }
                             entry<AboutRoute> { AboutPage() }
+                            entry<DesignRoute> { DesignPage() }
                             entry<BlockA11yAppListRoute> { BlockA11yAppListPage() }
                             entry<AdvancedPageRoute> { AdvancedPage() }
                             entry<SnapshotPageRoute> { SnapshotPage() }
@@ -415,7 +407,7 @@ private fun ShizukuErrorDialog(stateFlow: MutableStateFlow<Throwable?>) {
         val errorText = remember { state.stackTraceToString() }
         val appInfoCache = appInfoMapFlow.collectAsState().value
         val installed = appInfoCache.contains(shizukuAppId)
-        AlertDialog(
+        PerfAlertDialog(
             onDismissRequest = { stateFlow.value = null },
             title = { Text(text = "授权错误") },
             text = {
@@ -439,12 +431,12 @@ private fun ShizukuErrorDialog(stateFlow: MutableStateFlow<Throwable?>) {
                             Text(
                                 text = errorText,
                                 modifier = Modifier
-                                    .clip(MaterialTheme.shapes.extraSmall)
-                                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(MiuixTheme.colorScheme.surfaceContainerHigh)
                                     .padding(8.dp)
                                     .heightIn(max = 400.dp)
                                     .verticalScroll(rememberScrollState()),
-                                style = MaterialTheme.typography.bodySmall,
+                                style = MiuixTheme.textStyles.body2,
                             )
                         }
                         PerfIcon(
@@ -456,32 +448,40 @@ private fun ShizukuErrorDialog(stateFlow: MutableStateFlow<Throwable?>) {
                                 .padding(4.dp)
                                 .size(20.dp),
                             imageVector = PerfIcon.ContentCopy,
-                            tint = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.75f),
+                            tint = MiuixTheme.colorScheme.onSurfaceVariantSummary.copy(alpha = 0.75f),
                         )
                     }
                 }
             },
             confirmButton = {
                 if (installed) {
-                    TextButton(onClick = {
-                        stateFlow.value = null
-                        openApp(shizukuAppId)
-                    }) {
-                        Text(text = "打开 Shizuku")
-                    }
+                    TextButton(
+                        text = "打开 Shizuku",
+                        onClick = {
+                            stateFlow.value = null
+                            openApp(shizukuAppId)
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.textButtonColorsPrimary(),
+                    )
                 } else {
-                    TextButton(onClick = {
-                        stateFlow.value = null
-                        openUri(ShortUrlSet.URL4)
-                    }) {
-                        Text(text = "去下载")
-                    }
+                    TextButton(
+                        text = "去下载",
+                        onClick = {
+                            stateFlow.value = null
+                            openUri(ShortUrlSet.URL4)
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.textButtonColorsPrimary(),
+                    )
                 }
             },
             dismissButton = {
-                TextButton(onClick = { stateFlow.value = null }) {
-                    Text(text = "我知道了")
-                }
+                TextButton(
+                    text = "我知道了",
+                    onClick = { stateFlow.value = null },
+                    modifier = Modifier.weight(1f),
+                )
             }
         )
     }
@@ -508,7 +508,7 @@ fun AccessRestrictedSettingsDlg() {
         }
     }
     if (accessRestrictedSettingsShow && !isA11yPage && !a11yRunning) {
-        AlertDialog(
+        PerfAlertDialog(
             title = {
                 Text(text = "权限受限")
             },
@@ -519,19 +519,24 @@ fun AccessRestrictedSettingsDlg() {
                 accessRestrictedSettingsShowFlow.value = false
             },
             confirmButton = {
-                TextButton({
-                    accessRestrictedSettingsShowFlow.value = false
-                    mainVm.navigateWebPage(ShortUrlSet.URL2)
-                }) {
-                    Text(text = "解除")
-                }
+                TextButton(
+                    text = "解除",
+                    onClick = {
+                        accessRestrictedSettingsShowFlow.value = false
+                        mainVm.navigateWebPage(ShortUrlSet.URL2)
+                    },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.textButtonColorsPrimary(),
+                )
             },
             dismissButton = {
-                TextButton({
-                    accessRestrictedSettingsShowFlow.value = false
-                }) {
-                    Text(text = "关闭")
-                }
+                TextButton(
+                    text = "关闭",
+                    onClick = {
+                        accessRestrictedSettingsShowFlow.value = false
+                    },
+                    modifier = Modifier.weight(1f),
+                )
             },
         )
     }
@@ -540,7 +545,7 @@ fun AccessRestrictedSettingsDlg() {
 @Composable
 fun UiAutomationAlreadyRegisteredDlg() {
     if (automationRegisteredExceptionFlow.collectAsState().value != null) {
-        AlertDialog(
+        PerfAlertDialog(
             onDismissRequest = {
                 automationRegisteredExceptionFlow.value = null
             },
@@ -549,11 +554,13 @@ fun UiAutomationAlreadyRegisteredDlg() {
                 Text(text = "自动化服务启动失败，检测到自动化服务已被其他应用占用，请先关闭已有服务后重试\n\n注：自动化服务只能同时运行一个，请确保没有其他应用或测试框架占用后再启动")
             },
             confirmButton = {
-                TextButton(onClick = {
-                    automationRegisteredExceptionFlow.value = null
-                }) {
-                    Text(text = "我知道了")
-                }
+                TextButton(
+                    text = "我知道了",
+                    onClick = {
+                        automationRegisteredExceptionFlow.value = null
+                    },
+                    modifier = Modifier.weight(1f),
+                )
             }
         )
     }

@@ -16,15 +16,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
+import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
@@ -36,16 +33,17 @@ import li.songe.gkd.MainActivity
 import li.songe.gkd.permission.PermissionState
 import li.songe.gkd.permission.appOpsRestrictStateList
 import li.songe.gkd.permission.appOpsRestrictedFlow
+import li.songe.gkd.ui.component.AppPageScaffold
 import li.songe.gkd.ui.component.AuthButtonGroup
 import li.songe.gkd.ui.component.EmptyText
 import li.songe.gkd.ui.component.ManualAuthDialog
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
-import li.songe.gkd.ui.component.PerfTopAppBar
 import li.songe.gkd.ui.component.updateDialogOptions
 import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.itemHorizontalPadding
+import li.songe.gkd.ui.style.lineHeightDp
 import li.songe.gkd.util.getShareApkFile
 import li.songe.gkd.util.launchAsFn
 import li.songe.gkd.util.launchTry
@@ -60,17 +58,15 @@ fun AppOpsAllowPage() {
     val mainVm = LocalMainViewModel.current
     val context = LocalActivity.current as MainActivity
     val vm = viewModel<AppOpsAllowVm>()
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val appOpsRestricted by appOpsRestrictedFlow.collectAsState()
-    Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection), topBar = {
-        PerfTopAppBar(scrollBehavior = scrollBehavior, navigationIcon = {
+    AppPageScaffold(
+        title = "解除限制",
+        navigationIcon = {
             PerfIconButton(imageVector = PerfIcon.ArrowBack, onClick = {
                 mainVm.popPage()
             })
-        }, title = {
-            Text(text = "解除限制")
-        })
-    }) { contentPadding ->
+        },
+    ) { contentPadding ->
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -144,7 +140,7 @@ fun AppOpsAllowPage() {
 private fun RestrictItem(state: PermissionState) {
     if (!state.stateFlow.collectAsState().value) {
         Row {
-            val lineHeightDp = LocalDensity.current.run { LocalTextStyle.current.lineHeight.toDp() }
+            val lineHeightDp = LocalDensity.current.let { LocalTextStyle.current.lineHeightDp(it) }
             val size = 5.dp
             Spacer(
                 modifier = Modifier

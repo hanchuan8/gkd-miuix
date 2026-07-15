@@ -1,24 +1,20 @@
 package li.songe.gkd.ui.component
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import li.songe.gkd.ui.style.itemPadding
 import li.songe.gkd.util.throttle
+import top.yukonga.miuix.kmp.basic.BasicComponent
+import top.yukonga.miuix.kmp.basic.Text as MiuixText
+import top.yukonga.miuix.kmp.preference.SwitchPreference
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun TextSwitch(
@@ -36,63 +32,65 @@ fun TextSwitch(
     onClick: (() -> Unit)? = { onCheckedChange?.invoke(!checked) },
     onClickLabel: String? = "切换${title}状态",
 ) {
-    val topModifier = if (onClick != null) {
-        modifier.clickable(onClick = onClick, onClickLabel = onClickLabel)
-    } else {
-        modifier
+    val throttledChange = onCheckedChange?.let { throttle(fn = it) }
+    val simpleToggle = onClickLabel == "切换${title}状态" && suffixIcon == null
+    val hasSuffixLink = suffix != null && onSuffixClick != null
+    val summaryText = when {
+        hasSuffixLink -> null
+        subtitle != null && suffix != null -> "$subtitle $suffix"
+        else -> subtitle
     }
-    Row(
-        modifier = if (paddingDisabled) topModifier else topModifier.itemPadding(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-            )
-            if (subtitle != null) {
-                if (suffix != null) {
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(
-                            text = subtitle,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = suffix, style = MaterialTheme.typography.bodyMedium.run {
-                                if (suffixUnderline) {
-                                    copy(textDecoration = TextDecoration.Underline)
-                                } else {
-                                    this
-                                }
-                            },
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = if (onSuffixClick != null) Modifier.clickable(
-                                onClick = throttle(fn = onSuffixClick),
-                            ) else Modifier
-                        )
-                    }
-                } else {
-                    Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        }
-        suffixIcon?.invoke()
-        PerfSwitch(
+    if (simpleToggle && !hasSuffixLink) {
+        SwitchPreference(
+            modifier = modifier,
+            title = title,
+            summary = summaryText,
             checked = checked,
             enabled = enabled,
-            onCheckedChange = onCheckedChange?.let { throttle(fn = it) },
-            modifier = Modifier.semantics {
-                this.stateDescription = title + if (checked) "已开启" else "已关闭"
-            }
+            onCheckedChange = { throttledChange?.invoke(it) },
+        )
+    } else {
+        BasicComponent(
+            modifier = modifier,
+            title = title,
+            summary = summaryText,
+            enabled = enabled,
+            onClick = onClick,
+            onClickLabel = onClickLabel,
+            role = Role.Switch,
+            endActions = {
+                suffixIcon?.invoke()
+                PerfSwitch(
+                    checked = checked,
+                    enabled = enabled,
+                    onCheckedChange = throttledChange,
+                    modifier = Modifier.semantics {
+                        this.stateDescription = title + if (checked) "已开启" else "已关闭"
+                    },
+                )
+            },
+            bottomAction = if (hasSuffixLink && subtitle != null) {
+                {
+                    Row {
+                        MiuixText(
+                            text = subtitle,
+                            style = MiuixTheme.textStyles.body2,
+                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        MiuixText(
+                            text = suffix!!,
+                            style = MiuixTheme.textStyles.body2,
+                            color = MiuixTheme.colorScheme.primary,
+                            modifier = Modifier.clickable(
+                                onClick = throttle(fn = onSuffixClick!!),
+                            ),
+                        )
+                    }
+                }
+            } else {
+                null
+            },
         )
     }
 }

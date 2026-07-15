@@ -10,11 +10,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import li.songe.gkd.ui.component.PerfDropdownMenu
+import li.songe.gkd.ui.component.PerfDropdownMenuItem
+import top.yukonga.miuix.kmp.basic.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -26,7 +24,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -35,13 +32,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
 import li.songe.gkd.db.DbSet
 import li.songe.gkd.ui.component.AnimationFloatingActionButton
+import li.songe.gkd.ui.component.AppPageScaffold
 import li.songe.gkd.ui.component.BatchActionButtonGroup
 import li.songe.gkd.ui.component.EmptyText
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
-import li.songe.gkd.ui.component.PerfTopAppBar
 import li.songe.gkd.ui.component.RuleGroupCard
-import li.songe.gkd.ui.component.TowLineText
 import li.songe.gkd.ui.component.animateListItem
 import li.songe.gkd.ui.component.toGroupState
 import li.songe.gkd.ui.component.useListScrollState
@@ -49,7 +45,6 @@ import li.songe.gkd.ui.component.waitResult
 import li.songe.gkd.ui.icon.BackCloseIcon
 import li.songe.gkd.ui.share.ListPlaceholder
 import li.songe.gkd.ui.share.LocalMainViewModel
-import li.songe.gkd.ui.share.noRippleClickable
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.scaffoldPadding
 import li.songe.gkd.util.copyText
@@ -98,7 +93,7 @@ fun SubsAppGroupListPage(route: SubsAppGroupListRoute) {
         vm.isSelectedModeFlow.value = false
     }
     val resetKey = rememberSaveable { mutableIntStateOf(0) }
-    val (scrollBehavior, listState) = useListScrollState(resetKey, app.groups.isEmpty())
+    val listState = useListScrollState(resetKey, app.groups.isEmpty())
     if (focusGroupKey != null) {
         LaunchedEffect(null) {
             if (vm.focusGroupFlow?.value != null) {
@@ -109,8 +104,14 @@ fun SubsAppGroupListPage(route: SubsAppGroupListRoute) {
             }
         }
     }
-    Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection), topBar = {
-        PerfTopAppBar(scrollBehavior = scrollBehavior, navigationIcon = {
+    val pageTitle = if (isSelectedMode) {
+        if (selectedDataSet.isNotEmpty()) selectedDataSet.size.toString() else " "
+    } else {
+        app.name ?: appId
+    }
+    AppPageScaffold(
+        title = pageTitle,
+        navigationIcon = {
             IconButton(onClick = throttle {
                 if (isSelectedMode) {
                     vm.isSelectedModeFlow.value = false
@@ -120,23 +121,8 @@ fun SubsAppGroupListPage(route: SubsAppGroupListRoute) {
             }) {
                 BackCloseIcon(backOrClose = !isSelectedMode)
             }
-        }, title = {
-            val titleModifier = Modifier.noRippleClickable { resetKey.intValue++ }
-            if (isSelectedMode) {
-                Text(
-                    modifier = titleModifier,
-                    text = if (selectedDataSet.isNotEmpty()) selectedDataSet.size.toString() else "",
-                )
-            } else {
-                TowLineText(
-                    modifier = titleModifier,
-                    title = subs.name,
-                    subtitle = appId,
-                    showApp = true,
-                    appFallbackName = app.name,
-                )
-            }
-        }, actions = {
+        },
+        actions = {
             var expanded by remember { mutableStateOf(false) }
             AnimatedContent(
                 targetState = isSelectedMode,
@@ -210,14 +196,12 @@ fun SubsAppGroupListPage(route: SubsAppGroupListRoute) {
                     modifier = Modifier
                         .wrapContentSize(Alignment.TopStart)
                 ) {
-                    DropdownMenu(
+                    PerfDropdownMenu(
                         expanded = expanded,
                         onDismissRequest = { expanded = false }
                     ) {
-                        DropdownMenuItem(
-                            text = {
-                                Text(text = "全选")
-                            },
+                        PerfDropdownMenuItem(
+                            text = "全选",
                             onClick = {
                                 expanded = false
                                 vm.selectedDataSetFlow.value = app.groups.map {
@@ -228,10 +212,8 @@ fun SubsAppGroupListPage(route: SubsAppGroupListRoute) {
                                 }.toSet()
                             }
                         )
-                        DropdownMenuItem(
-                            text = {
-                                Text(text = "反选")
-                            },
+                        PerfDropdownMenuItem(
+                            text = "反选",
                             onClick = {
                                 expanded = false
                                 val newSelectedIds = app.groups.map {
@@ -246,25 +228,26 @@ fun SubsAppGroupListPage(route: SubsAppGroupListRoute) {
                     }
                 }
             }
-        })
-    }, floatingActionButton = {
-        if (editable) {
-            AnimationFloatingActionButton(
-                visible = !isSelectedMode,
-                onClick = {
-                    mainVm.navigatePage(
-                        UpsertRuleGroupRoute(
-                            subsId = subsItemId,
-                            groupKey = null,
-                            appId = appId
+        },
+        floatingActionButton = {
+            if (editable) {
+                AnimationFloatingActionButton(
+                    visible = !isSelectedMode,
+                    onClick = {
+                        mainVm.navigatePage(
+                            UpsertRuleGroupRoute(
+                                subsId = subsItemId,
+                                groupKey = null,
+                                appId = appId
+                            )
                         )
-                    )
-                },
-                contentDescription = "添加规则",
-                imageVector = PerfIcon.Add,
-            )
-        }
-    }) { contentPadding ->
+                    },
+                    contentDescription = "添加规则",
+                    imageVector = PerfIcon.Add,
+                )
+            }
+        },
+    ) { contentPadding ->
         LazyColumn(
             modifier = Modifier.scaffoldPadding(contentPadding),
             state = listState,

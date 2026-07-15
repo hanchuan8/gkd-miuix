@@ -15,22 +15,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
@@ -48,16 +40,16 @@ import li.songe.gkd.shizuku.SafeAppOpsService
 import li.songe.gkd.shizuku.shizukuUsedFlow
 import li.songe.gkd.store.updateEnableAutomator
 import li.songe.gkd.ui.component.AnimatedBooleanContent
+import li.songe.gkd.ui.component.AppPageScaffold
 import li.songe.gkd.ui.component.ManualAuthDialog
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
-import li.songe.gkd.ui.component.PerfTopAppBar
 import li.songe.gkd.ui.component.updateDialogOptions
 import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.cardHorizontalPadding
 import li.songe.gkd.ui.style.itemHorizontalPadding
-import li.songe.gkd.ui.style.surfaceCardColors
+import li.songe.gkd.ui.style.lineHeightDp
 import li.songe.gkd.util.AndroidTarget
 import li.songe.gkd.util.AutomatorModeOption
 import li.songe.gkd.util.ShortUrlSet
@@ -66,6 +58,12 @@ import li.songe.gkd.util.openA11ySettings
 import li.songe.gkd.util.shFolder
 import li.songe.gkd.util.throttle
 import li.songe.gkd.util.toast
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.CardDefaults
+import top.yukonga.miuix.kmp.basic.RadioButton
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextButton
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Serializable
 data object AuthA11yRoute : NavKey
@@ -78,18 +76,16 @@ fun AuthA11yPage() {
     val writeSecureSettings by writeSecureSettingsState.stateFlow.collectAsState()
     val a11yRunning by A11yService.isRunning.collectAsState()
     val automatorMode by mainVm.automatorModeFlow.collectAsState()
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection), topBar = {
-        PerfTopAppBar(scrollBehavior = scrollBehavior, navigationIcon = {
+    AppPageScaffold(
+        title = "工作模式",
+        navigationIcon = {
             PerfIconButton(
                 imageVector = PerfIcon.ArrowBack,
                 onClick = {
                     mainVm.popPage()
                 })
-        }, title = {
-            Text(text = "工作模式")
-        })
-    }) { contentPadding ->
+        },
+    ) { contentPadding ->
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -101,7 +97,9 @@ fun AuthA11yPage() {
                     .padding(horizontal = itemHorizontalPadding)
                     .fillMaxWidth(),
                 onClick = throttle { mainVm.updateAutomatorMode(AutomatorModeOption.A11yMode) },
-                colors = surfaceCardColors,
+                colors = CardDefaults.defaultColors(
+                    color = MiuixTheme.colorScheme.surfaceContainer,
+                ),
             ) {
                 Row(
                     modifier = Modifier.padding(12.dp),
@@ -114,7 +112,7 @@ fun AuthA11yPage() {
                     Text(
                         modifier = Modifier.padding(start = 12.dp),
                         text = AutomatorModeOption.A11yMode.label,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MiuixTheme.textStyles.title3,
                     )
                 }
                 Text(
@@ -122,13 +120,13 @@ fun AuthA11yPage() {
                         .padding(horizontal = cardHorizontalPadding)
                         .padding(start = 4.dp),
                     text = "基础",
-                    style = MaterialTheme.typography.titleSmall
+                    style = MiuixTheme.textStyles.subtitle,
                 )
                 TextListItem(
                     modifier = Modifier
                         .padding(horizontal = cardHorizontalPadding)
                         .padding(start = 8.dp, top = 4.dp),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MiuixTheme.textStyles.body1,
                     list = listOf(
                         "授予「无障碍权限」",
                         "无障碍关闭后需重新授权"
@@ -142,7 +140,7 @@ fun AuthA11yPage() {
                                 .padding(horizontal = cardHorizontalPadding)
                                 .padding(start = 8.dp, top = 4.dp),
                             text = "已持有「无障碍权限」可继续使用",
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MiuixTheme.textStyles.body2,
                         )
                     },
                     contentFalse = {
@@ -154,24 +152,20 @@ fun AuthA11yPage() {
                             horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
                             TextButton(
+                                text = "手动授权",
                                 onClick = throttle { openA11ySettings() },
-                            ) {
-                                Text(
-                                    text = "手动授权",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                )
-                            }
+                            )
                             Text(
                                 modifier = Modifier
                                     .padding(bottom = 12.dp)
-                                    .clip(MaterialTheme.shapes.extraSmall)
+                                    .clip(RoundedCornerShape(4.dp))
                                     .clickable(onClick = throttle {
                                         mainVm.navigateWebPage(ShortUrlSet.URL2)
                                     })
                                     .padding(horizontal = 4.dp),
                                 text = "无法开启无障碍?",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary,
+                                style = MiuixTheme.textStyles.body2,
+                                color = MiuixTheme.colorScheme.primary,
                             )
                         }
                     }
@@ -181,13 +175,13 @@ fun AuthA11yPage() {
                         .padding(horizontal = cardHorizontalPadding)
                         .padding(start = 4.dp, top = 8.dp),
                     text = "增强",
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MiuixTheme.textStyles.subtitle,
                 )
                 TextListItem(
                     modifier = Modifier
                         .padding(horizontal = cardHorizontalPadding)
                         .padding(start = 8.dp, top = 4.dp),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MiuixTheme.textStyles.body1,
                     list = listOf(
                         "授予「写入安全设置权限」",
                         "应用可自行控制开关无障碍",
@@ -201,7 +195,7 @@ fun AuthA11yPage() {
                                 .padding(horizontal = cardHorizontalPadding)
                                 .padding(start = 8.dp, top = 4.dp),
                             text = "已持有「写入安全设置权限」 优先使用此项",
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MiuixTheme.textStyles.body2,
                         )
                     },
                     contentFalse = {
@@ -211,18 +205,17 @@ fun AuthA11yPage() {
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             ShizukuAuthButton()
-                            TextButton(onClick = { vm.showCopyDlgFlow.value = true }) {
-                                Text(
-                                    text = "命令授权",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                )
-                            }
+                            TextButton(
+                                text = "命令授权",
+                                onClick = { vm.showCopyDlgFlow.value = true },
+                            )
                         }
                     }
                 )
                 TextButton(
                     modifier = Modifier
                         .padding(horizontal = cardHorizontalPadding),
+                    text = "无感保活",
                     onClick = throttle {
                         if (!writeSecureSettings) {
                             toast("请先授予「${writeSecureSettingsState.name}」")
@@ -231,13 +224,8 @@ fun AuthA11yPage() {
                             title = "无感保活",
                             text = "添加通知栏快捷开关\n\n1. 下拉通知栏至「快捷开关」标界面\n2. 找到名称为 ${META.appName} 的快捷开关\n3. 添加此开关到通知面板 \n\n只要此快捷开关在通知面板可见\n无论是系统杀后台还是自身崩溃\n简单下拉打开通知即可重启"
                         )
-                    }
-                ) {
-                    Text(
-                        text = "无感保活",
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                }
+                    },
+                )
                 Spacer(modifier = Modifier.height(12.dp))
             }
             Spacer(modifier = Modifier.height(12.dp))
@@ -246,7 +234,9 @@ fun AuthA11yPage() {
                     .padding(horizontal = itemHorizontalPadding)
                     .fillMaxWidth(),
                 onClick = throttle { mainVm.updateAutomatorMode(AutomatorModeOption.AutomationMode) },
-                colors = surfaceCardColors,
+                colors = CardDefaults.defaultColors(
+                    color = MiuixTheme.colorScheme.surfaceContainer,
+                ),
             ) {
                 Row(
                     modifier = Modifier.padding(12.dp),
@@ -259,14 +249,14 @@ fun AuthA11yPage() {
                     Text(
                         modifier = Modifier.padding(start = 12.dp),
                         text = AutomatorModeOption.AutomationMode.label,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MiuixTheme.textStyles.title3,
                     )
                 }
                 TextListItem(
                     modifier = Modifier
                         .padding(horizontal = cardHorizontalPadding)
                         .padding(start = 8.dp),
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MiuixTheme.textStyles.body1,
                     list = listOf(
                         "自动化驱动的无障碍",
                         "不会导致界面显示异常",
@@ -282,7 +272,7 @@ fun AuthA11yPage() {
                                 .padding(horizontal = cardHorizontalPadding)
                                 .padding(start = 8.dp, top = 8.dp),
                             text = "已连接 Shizuku 服务，可继续使用",
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MiuixTheme.textStyles.body2,
                         )
                     },
                     contentFalse = {
@@ -295,15 +285,11 @@ fun AuthA11yPage() {
                 )
                 TextButton(
                     modifier = Modifier.padding(start = cardHorizontalPadding),
+                    text = "局部无障碍",
                     onClick = throttle {
                         mainVm.navigatePage(A11YScopeAppListRoute)
                     },
-                ) {
-                    Text(
-                        text = "局部无障碍",
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-                }
+                )
                 Spacer(modifier = Modifier.height(12.dp))
             }
             Spacer(modifier = Modifier.height(EmptyHeight))
@@ -327,6 +313,7 @@ private fun ShizukuAuthButton(
     val vm = viewModel<AuthA11yVm>()
     TextButton(
         modifier = modifier,
+        text = "Shizuku 授权",
         onClick = throttle(vm.viewModelScope.launchAsFn(Dispatchers.IO) {
             mainVm.guardShizukuContext()
             if (writeSecureSettingsState.value) {
@@ -334,13 +321,8 @@ private fun ShizukuAuthButton(
                 updateEnableAutomator(true)
                 fixRestartAutomatorService()
             }
-        })
-    ) {
-        Text(
-            text = "Shizuku 授权",
-            style = MaterialTheme.typography.bodyLarge,
-        )
-    }
+        }),
+    )
 }
 
 private val Int.appopsAllow get() = "appops set ${META.appId} ${AppOpsManagerHidden.opToName(this)} allow"
@@ -371,9 +353,11 @@ val gkdStartCommandText by lazy {
 private fun TextListItem(
     list: List<String>,
     modifier: Modifier = Modifier,
-    style: TextStyle = LocalTextStyle.current,
+    style: TextStyle = MiuixTheme.textStyles.body1,
 ) {
-    val lineHeightDp = LocalDensity.current.run { style.lineHeight.toDp() }
+    val density = LocalDensity.current
+    // MIUIX TextStyle.lineHeight 可能不是 Sp，直接 toDp() 会抛 Only Sp can convert to Px
+    val lineHeightDp = style.lineHeightDp(density)
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -384,7 +368,7 @@ private fun TextListItem(
                     modifier = Modifier
                         .padding(vertical = (lineHeightDp - 4.dp) / 2)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.tertiary)
+                        .background(MiuixTheme.colorScheme.primary)
                         .size(4.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))

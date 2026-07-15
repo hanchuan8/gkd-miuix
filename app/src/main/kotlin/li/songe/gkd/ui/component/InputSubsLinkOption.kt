@@ -2,18 +2,15 @@ package li.songe.gkd.ui.component
 
 import android.webkit.URLUtil
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -23,8 +20,11 @@ import li.songe.gkd.util.ShortUrlSet
 import li.songe.gkd.util.subsItemsFlow
 import li.songe.gkd.util.throttle
 import li.songe.gkd.util.toast
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.basic.TextButton
+import top.yukonga.miuix.kmp.basic.TextField
+import top.yukonga.miuix.kmp.window.WindowDialog
 import kotlin.coroutines.resume
-
 
 class InputSubsLinkOption {
     private val showFlow = MutableStateFlow(false)
@@ -75,63 +75,60 @@ class InputSubsLinkOption {
     @Composable
     fun ContentDialog() {
         val show by showFlow.collectAsState()
-        if (show) {
-            val mainVm = LocalMainViewModel.current
-            val value by valueFlow.collectAsState()
-            val initValue by initValueFlow.collectAsState()
-            AlertDialog(
-                properties = DialogProperties(dismissOnClickOutside = false),
-                title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(text = if (initValue.isNotEmpty()) "修改订阅" else "添加订阅")
-                        PerfIconButton(
-                            imageVector = PerfIcon.HelpOutline,
-                            contentDescription = "订阅帮助",
-                            onClick = throttle {
-                                cancel()
-                                mainVm.navigatePage(WebViewRoute(initUrl = ShortUrlSet.URL5))
-                            })
-                    }
-                },
-                text = {
-                    OutlinedTextField(
-                        value = value,
-                        onValueChange = {
-                            valueFlow.value = it.trim()
+        val mainVm = LocalMainViewModel.current
+        val value by valueFlow.collectAsState()
+        val initValue by initValueFlow.collectAsState()
+        WindowDialog(
+            show = show,
+            title = if (initValue.isNotEmpty()) "修改订阅" else "添加订阅",
+            onDismissRequest = ::cancel,
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    PerfIconButton(
+                        imageVector = PerfIcon.HelpOutline,
+                        contentDescription = "订阅帮助",
+                        onClick = throttle {
+                            cancel()
+                            mainVm.navigatePage(WebViewRoute(initUrl = ShortUrlSet.URL5))
                         },
-                        maxLines = 8,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .autoFocus(),
-                        placeholder = {
-                            Text(text = "请输入订阅链接")
-                        },
-                        isError = value.isNotEmpty() && !URLUtil.isNetworkUrl(value),
                     )
-                },
-                onDismissRequest = {
-                    cancel()
-                },
-                confirmButton = {
+                }
+                TextField(
+                    value = value,
+                    onValueChange = { valueFlow.value = it.trim() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .autoFocus(),
+                    label = "请输入订阅链接",
+                    useLabelAsPlaceholder = true,
+                    singleLine = true,
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
                     TextButton(
+                        text = "取消",
+                        onClick = ::cancel,
+                        modifier = Modifier.weight(1f),
+                    )
+                    TextButton(
+                        text = "确定",
+                        onClick = throttle(::submit),
                         enabled = value.isNotEmpty(),
-                        onClick = throttle(fn = {
-                            submit()
-                        }),
-                    ) {
-                        Text(text = "确定")
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = ::cancel) {
-                        Text(text = "取消")
-                    }
-                },
-            )
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.textButtonColorsPrimary(),
+                    )
+                }
+            }
         }
     }
 }

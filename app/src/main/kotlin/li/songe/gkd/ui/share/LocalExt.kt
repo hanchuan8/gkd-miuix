@@ -12,3 +12,6 @@ val LocalDarkTheme = staticCompositionLocalOf { false }
 val LocalIsTalkbackEnabled = staticCompositionLocalOf {
     false
 }
+
+/** MIUIX：顶栏是否处于毛玻璃透明态（由壳层提供） */
+val LocalMiuixBlurActive = staticCompositionLocalOf { false }

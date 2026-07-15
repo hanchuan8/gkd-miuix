@@ -1,31 +1,40 @@
 package li.songe.gkd.ui.component
 
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import li.songe.gkd.util.stopCoroutine
 import li.songe.gkd.util.throttle
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.basic.TextButton
+import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.window.WindowDialog
 import kotlin.coroutines.resume
 
 data class AlertDialogOptions(
-    val title: @Composable (() -> Unit)? = null,
-    val text: @Composable (() -> Unit)? = null,
+    val title: String? = null,
+    val summary: String? = null,
+    val textContent: (@Composable () -> Unit)? = null,
     val onDismissRequest: (() -> Unit)? = null,
-    val confirmButton: @Composable () -> Unit,
-    val dismissButton: @Composable (() -> Unit)? = null,
+    val confirmText: String,
+    val confirmAction: () -> Unit,
+    val confirmError: Boolean = false,
+    val dismissText: String? = null,
+    val dismissAction: (() -> Unit)? = null,
 )
 
 private fun buildDialogOptions(
-    title: @Composable (() -> Unit),
-    text: @Composable (() -> Unit),
+    title: String,
+    text: String?,
+    textContent: (@Composable (() -> Unit))?,
     confirmText: String,
     confirmAction: () -> Unit,
     dismissText: String? = null,
@@ -35,43 +44,58 @@ private fun buildDialogOptions(
 ): AlertDialogOptions {
     return AlertDialogOptions(
         title = title,
-        text = text,
+        summary = if (textContent == null) text else null,
+        textContent = textContent,
         onDismissRequest = onDismissRequest,
-        confirmButton = {
-            TextButton(
-                onClick = throttle(fn = confirmAction),
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = if (error) MaterialTheme.colorScheme.error else Color.Unspecified
-                )
-            ) {
-                Text(text = confirmText)
-            }
-        },
-        dismissButton = if (dismissText != null && dismissAction != null) {
-            {
-                TextButton(
-                    onClick = throttle(fn = dismissAction),
-                ) {
-                    Text(text = dismissText)
-                }
-            }
-        } else {
-            null
-        },
+        confirmText = confirmText,
+        confirmAction = confirmAction,
+        confirmError = error,
+        dismissText = dismissText,
+        dismissAction = dismissAction,
     )
 }
 
 @Composable
 fun BuildDialog(stateFlow: MutableStateFlow<AlertDialogOptions?>) {
     val options by stateFlow.collectAsState()
-    options?.let {
-        AlertDialog(
-            text = it.text,
-            title = it.title,
-            onDismissRequest = it.onDismissRequest ?: { stateFlow.value = null },
-            confirmButton = it.confirmButton,
-            dismissButton = it.dismissButton,
-        )
+    val opt = options
+    WindowDialog(
+        show = opt != null,
+        title = opt?.title,
+        summary = opt?.summary,
+        onDismissRequest = opt?.onDismissRequest ?: { stateFlow.value = null },
+    ) {
+        if (opt == null) return@WindowDialog
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            opt.textContent?.invoke()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                if (opt.dismissText != null && opt.dismissAction != null) {
+                    TextButton(
+                        text = opt.dismissText,
+                        onClick = throttle(fn = opt.dismissAction),
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                TextButton(
+                    text = opt.confirmText,
+                    onClick = throttle(fn = opt.confirmAction),
+                    modifier = Modifier.weight(1f),
+                    colors = if (opt.confirmError) {
+                        ButtonDefaults.textButtonColors(
+                            textColor = MiuixTheme.colorScheme.error,
+                        )
+                    } else {
+                        ButtonDefaults.textButtonColorsPrimary()
+                    },
+                )
+            }
+        }
     }
 }
 
@@ -87,8 +111,9 @@ fun MutableStateFlow<AlertDialogOptions?>.updateDialogOptions(
     error: Boolean = false,
 ) {
     value = buildDialogOptions(
-        title = { Text(text = title) },
-        text = textContent ?: { Text(text = text ?: error("miss text")) },
+        title = title,
+        text = text,
+        textContent = textContent,
         confirmText = confirmText,
         confirmAction = confirmAction ?: { value = null },
         dismissText = dismissText,

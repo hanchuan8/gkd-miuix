@@ -1,26 +1,16 @@
 package li.songe.gkd.ui.component
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import li.songe.gkd.ui.style.itemPadding
 import li.songe.gkd.util.Option
-import li.songe.gkd.util.OptionIcon
 import li.songe.gkd.util.OptionMenuLabel
+import top.yukonga.miuix.kmp.preference.WindowDropdownPreference
 
+/**
+ * 下拉选项。使用 [WindowDropdownPreference]，在全屏 Dialog / 普通页都能展开，
+ * 避免 Overlay 挂在无 MIUIX Scaffold 的窗口里导致点击无反应。
+ */
 @Composable
 fun <T> TextMenu(
     modifier: Modifier = Modifier,
@@ -28,66 +18,24 @@ fun <T> TextMenu(
     option: Option<T>,
     onOptionChange: ((Option<T>) -> Unit),
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    Row(
-        modifier = Modifier
-            .clickable {
-                expanded = true
-            }
-            .fillMaxWidth().let {
-                if (modifier == Modifier) {
-                    it.itemPadding()
-                } else {
-                    it.then(modifier)
-                }
-            },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-        )
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = option.label,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            PerfIcon(
-                imageVector = PerfIcon.UnfoldMore,
-            )
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                option.options.forEach { otherOption ->
-                    val selected = remember { otherOption.value == option.value }
-                    DropdownMenuItem(
-                        modifier = if (selected) Modifier.background(MaterialTheme.colorScheme.onSecondary) else Modifier,
-                        leadingIcon = if (otherOption is OptionIcon) ({
-                            PerfIcon(
-                                imageVector = otherOption.icon,
-                            )
-                        }) else null,
-                        text = {
-                            val text = if (otherOption is OptionMenuLabel) {
-                                otherOption.menuLabel
-                            } else {
-                                otherOption.label
-                            }
-                            Text(text = text)
-                        },
-                        onClick = {
-                            expanded = false
-                            if (otherOption != option) {
-                                onOptionChange(otherOption)
-                            }
-                        },
-                    )
-                }
-            }
+    val items = remember(option.options) {
+        option.options.map { other ->
+            if (other is OptionMenuLabel) other.menuLabel else other.label
         }
     }
+    val selectedIndex = remember(option.value, option.options) {
+        option.options.indexOfFirst { it.value == option.value }.coerceAtLeast(0)
+    }
+    WindowDropdownPreference(
+        modifier = modifier,
+        title = title,
+        items = items,
+        selectedIndex = selectedIndex,
+        onSelectedIndexChange = { index ->
+            val selected = option.options.getOrNull(index) ?: return@WindowDropdownPreference
+            if (selected != option) {
+                onOptionChange(selected)
+            }
+        },
+    )
 }

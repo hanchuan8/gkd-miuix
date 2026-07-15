@@ -16,14 +16,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
+import li.songe.gkd.ui.component.PerfAlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -34,7 +32,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
@@ -60,7 +57,7 @@ import li.songe.gkd.R
 import li.songe.gkd.store.storeFlow
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
-import li.songe.gkd.ui.component.PerfTopAppBar
+import li.songe.gkd.ui.component.AppPageScaffold
 import li.songe.gkd.ui.component.RotatingLoadingIcon
 import li.songe.gkd.ui.component.SettingItem
 import li.songe.gkd.ui.component.TextListDialog
@@ -100,7 +97,7 @@ fun AboutPage() {
 
     var showInfoDlg by vm.showInfoDlgFlow.asMutableState()
     if (showInfoDlg) {
-        AlertDialog(
+        PerfAlertDialog(
             onDismissRequest = { showInfoDlg = false },
             title = { Text(text = "版本信息") },
             text = {
@@ -135,40 +132,33 @@ fun AboutPage() {
                 }
             },
             confirmButton = {
-                TextButton(onClick = {
-                    showInfoDlg = false
-                }) {
-                    Text(text = "关闭")
-                }
+                TextButton(
+                    text = "关闭",
+                    onClick = { showInfoDlg = false },
+                    modifier = Modifier.weight(1f),
+                )
             },
         )
     }
     var showShareAppDlg by vm.showShareAppDlgFlow.asMutableState()
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            PerfTopAppBar(
-                scrollBehavior = scrollBehavior,
-                navigationIcon = {
-                    PerfIconButton(
-                        imageVector = PerfIcon.ArrowBack,
-                        onClick = {
-                            mainVm.popPage()
-                        },
-                    )
+    AppPageScaffold(
+        title = "关于",
+        navigationIcon = {
+            PerfIconButton(
+                imageVector = PerfIcon.ArrowBack,
+                onClick = {
+                    mainVm.popPage()
                 },
-                title = { Text(text = "关于") },
-                actions = {
-                    PerfIconButton(
-                        imageVector = PerfIcon.Share,
-                        onClick = {
-                            showShareAppDlg = true
-                        },
-                    )
-                }
             )
-        }
+        },
+        actions = {
+            PerfIconButton(
+                imageVector = PerfIcon.Share,
+                onClick = {
+                    showShareAppDlg = true
+                },
+            )
+        },
     ) { contentPadding ->
         Column(
             modifier = Modifier

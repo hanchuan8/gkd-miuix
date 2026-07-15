@@ -1,11 +1,12 @@
 package li.songe.gkd.ui.component
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.material3.AlertDialog
+import li.songe.gkd.ui.component.PerfAlertDialog
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -82,7 +83,7 @@ class UploadOptions(
         when (val status = statusFlow.collectAsState().value) {
             null -> {}
             is LoadStatus.Loading -> {
-                AlertDialog(
+                PerfAlertDialog(
                     title = { Text(text = "上传文件中") },
                     text = {
                         val showExactProgress = 0f < status.progress && status.progress < 1f
@@ -98,33 +99,33 @@ class UploadOptions(
                     },
                     onDismissRequest = { },
                     confirmButton = {
-                        TextButton(onClick = {
-                            stopTask()
-                        }) {
-                            Text(text = "终止上传")
-                        }
+                        TextButton(
+                            text = "终止上传",
+                            onClick = { stopTask() },
+                            modifier = Modifier.weight(1f),
+                        )
                     },
                 )
             }
 
             is LoadStatus.Success -> {
                 val href = showHref(status.result)
-                AlertDialog(
+                PerfAlertDialog(
                     title = { Text(text = "上传完成") },
                     text = { CopyTextCard(text = href) },
                     onDismissRequest = {},
                     confirmButton = {
-                        TextButton(onClick = {
-                            statusFlow.value = null
-                        }) {
-                            Text(text = "关闭")
-                        }
+                        TextButton(
+                            text = "关闭",
+                            onClick = { statusFlow.value = null },
+                            modifier = Modifier.weight(1f),
+                        )
                     }
                 )
             }
 
             is LoadStatus.Failure -> {
-                AlertDialog(
+                PerfAlertDialog(
                     title = { Text(text = "上传失败") },
                     text = {
                         Text(text = status.exception.let {
@@ -133,21 +134,23 @@ class UploadOptions(
                     },
                     onDismissRequest = { statusFlow.value = null },
                     dismissButton = if (status.exception is GithubCookieException) ({
-                        TextButton(onClick = {
-                            statusFlow.value = null
-                            mainVm.showEditCookieDlgFlow.value = true
-                        }) {
-                            Text(text = "更换 Cookie")
-                        }
+                        TextButton(
+                            text = "更换 Cookie",
+                            onClick = {
+                                statusFlow.value = null
+                                mainVm.showEditCookieDlgFlow.value = true
+                            },
+                            modifier = Modifier.weight(1f),
+                        )
                     }) else {
                         null
                     },
                     confirmButton = {
-                        TextButton(onClick = {
-                            statusFlow.value = null
-                        }) {
-                            Text(text = "关闭")
-                        }
+                        TextButton(
+                            text = "关闭",
+                            onClick = { statusFlow.value = null },
+                            modifier = Modifier.weight(1f),
+                        )
                     },
                 )
             }

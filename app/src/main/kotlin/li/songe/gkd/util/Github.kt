@@ -3,10 +3,12 @@ package li.songe.gkd.util
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import li.songe.gkd.ui.component.PerfAlertDialog
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.basic.TextButton
+import top.yukonga.miuix.kmp.basic.TextField
+import li.songe.gkd.ui.component.autoFocus
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -38,7 +40,6 @@ import li.songe.gkd.data.GithubPoliciesAsset
 import li.songe.gkd.ui.WebViewRoute
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
-import li.songe.gkd.ui.component.autoFocus
 import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.json5.Json5
 import java.io.File
@@ -205,7 +206,7 @@ fun EditGithubCookieDlg() {
         var value by remember {
             mutableStateOf(mainVm.githubCookieFlow.value)
         }
-        AlertDialog(
+        PerfAlertDialog(
             properties = DialogProperties(dismissOnClickOutside = false),
             onDismissRequest = {
                 mainVm.showEditCookieDlgFlow.value = false
@@ -226,12 +227,13 @@ fun EditGithubCookieDlg() {
                 }
             },
             text = {
-                OutlinedTextField(
+                TextField(
                     value = value,
                     onValueChange = {
                         value = it.filter { c -> c != '\n' && c != '\r' }
                     },
-                    placeholder = { Text(text = "请输入 Github Cookie") },
+                    label = "请输入 Github Cookie",
+                    useLabelAsPlaceholder = true,
                     modifier = Modifier
                         .fillMaxWidth()
                         .autoFocus(),
@@ -239,18 +241,23 @@ fun EditGithubCookieDlg() {
                 )
             },
             confirmButton = {
-                TextButton(onClick = {
-                    mainVm.showEditCookieDlgFlow.value = false
-                    mainVm.githubCookieFlow.value = value.trim()
-                    toast("更新成功")
-                }) {
-                    Text(text = "确认")
-                }
+                TextButton(
+                    text = "确认",
+                    onClick = {
+                        mainVm.showEditCookieDlgFlow.value = false
+                        mainVm.githubCookieFlow.value = value.trim()
+                        toast("更新成功")
+                    },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.textButtonColorsPrimary(),
+                )
             },
             dismissButton = {
-                TextButton(onClick = { mainVm.showEditCookieDlgFlow.value = false }) {
-                    Text(text = "取消")
-                }
+                TextButton(
+                    text = "取消",
+                    onClick = { mainVm.showEditCookieDlgFlow.value = false },
+                    modifier = Modifier.weight(1f),
+                )
             }
         )
     }

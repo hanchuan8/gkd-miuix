@@ -7,7 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,15 +18,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.BottomAppBar
+import li.songe.gkd.ui.component.PerfAlertDialog
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -58,6 +53,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import li.songe.gkd.MainActivity
 import li.songe.gkd.R
+import li.songe.gkd.notif.ActionTipNotif
 import li.songe.gkd.permission.canDrawOverlaysState
 import li.songe.gkd.permission.foregroundServiceSpecialUseState
 import li.songe.gkd.permission.ignoreBatteryOptimizationsState
@@ -71,12 +67,13 @@ import li.songe.gkd.store.storeFlow
 import li.songe.gkd.ui.AboutRoute
 import li.songe.gkd.ui.AdvancedPageRoute
 import li.songe.gkd.ui.BlockA11yAppListRoute
-import li.songe.gkd.ui.component.CustomOutlinedTextField
+import li.songe.gkd.ui.DesignRoute
 import li.songe.gkd.ui.component.FullscreenDialog
 import li.songe.gkd.ui.component.PerfCustomIconButton
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
 import li.songe.gkd.ui.component.PerfTopAppBar
+import li.songe.gkd.ui.component.PreferenceGroup
 import li.songe.gkd.ui.component.SettingItem
 import li.songe.gkd.ui.component.TextListDialog
 import li.songe.gkd.ui.component.TextMenu
@@ -90,7 +87,9 @@ import li.songe.gkd.ui.share.asMutableState
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.iconTextSize
 import li.songe.gkd.ui.style.itemHorizontalPadding
-import li.songe.gkd.ui.style.titleItemPadding
+import li.songe.gkd.ui.style.lineHeightDp
+import li.songe.gkd.util.ActionTipLiveDurationOption
+import li.songe.gkd.util.ActionTipStyleOption
 import li.songe.gkd.util.AndroidTarget
 import li.songe.gkd.util.BackupUtils
 import li.songe.gkd.util.DarkThemeOption
@@ -100,8 +99,15 @@ import li.songe.gkd.util.mapState
 import li.songe.gkd.util.openAppDetailsSettings
 import li.songe.gkd.util.saveFileToDownloads
 import li.songe.gkd.util.shareFile
+import li.songe.gkd.util.showActionTip
 import li.songe.gkd.util.throttle
 import li.songe.gkd.util.toast
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.Scaffold
+import top.yukonga.miuix.kmp.basic.TextButton
+import top.yukonga.miuix.kmp.basic.TextField
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun useSettingsPage(): ScaffoldExt {
@@ -117,7 +123,7 @@ fun useSettingsPage(): ScaffoldExt {
             mutableStateOf(store.actionToast)
         }
         val maxCharLen = 64
-        AlertDialog(
+        PerfAlertDialog(
             properties = DialogProperties(dismissOnClickOutside = false),
             title = {
                 Row(
@@ -147,43 +153,108 @@ fun useSettingsPage(): ScaffoldExt {
                 }
             },
             text = {
-                OutlinedTextField(
-                    value = value,
-                    placeholder = {
-                        Text(text = "请输入提示内容")
-                    },
-                    onValueChange = {
-                        value = it.take(maxCharLen)
-                    },
-                    supportingText = {
-                        Text(
-                            text = "${value.length} / $maxCharLen",
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.End,
-                        )
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .autoFocus()
-                )
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    TextField(
+                        value = value,
+                        onValueChange = {
+                            value = it.take(maxCharLen)
+                        },
+                        label = "请输入提示内容",
+                        useLabelAsPlaceholder = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .autoFocus(),
+                    )
+                    Text(
+                        text = "${value.length} / $maxCharLen",
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.End,
+                    )
+                }
             },
             onDismissRequest = { showToastInputDlg = false },
             confirmButton = {
-                TextButton(enabled = value.isNotEmpty(), onClick = {
-                    if (value != storeFlow.value.actionToast) {
-                        storeFlow.update { it.copy(actionToast = value) }
-                        toast("更新成功")
-                    }
-                    showToastInputDlg = false
-                }) {
-                    Text(text = "确认")
-                }
+                TextButton(
+                    text = "确认",
+                    enabled = value.isNotEmpty(),
+                    onClick = {
+                        if (value != storeFlow.value.actionToast) {
+                            storeFlow.update { it.copy(actionToast = value) }
+                            toast("更新成功")
+                        }
+                        showToastInputDlg = false
+                    },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.textButtonColorsPrimary(),
+                )
             },
             dismissButton = {
-                TextButton(onClick = { showToastInputDlg = false }) {
-                    Text(text = "取消")
-                }
+                TextButton(
+                    text = "取消",
+                    onClick = { showToastInputDlg = false },
+                    modifier = Modifier.weight(1f),
+                )
             }
+        )
+    }
+
+    var showLiveDurationDlg by remember { mutableStateOf(false) }
+    if (showLiveDurationDlg) {
+        var value by remember {
+            mutableStateOf(store.resolveActionTipLiveDurationSec().toString())
+        }
+        val parsedSec = value.toIntOrNull()
+        val validSec = parsedSec != null &&
+            parsedSec in ActionTipNotif.MIN_DURATION_SEC..ActionTipNotif.MAX_DURATION_SEC
+        PerfAlertDialog(
+            properties = DialogProperties(dismissOnClickOutside = false),
+            title = { Text(text = "实时通知存在时间") },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    TextField(
+                        value = value,
+                        onValueChange = { newValue ->
+                            value = newValue.filter(Char::isDigit).take(3)
+                        },
+                        label = "秒数（${ActionTipNotif.MIN_DURATION_SEC}-${ActionTipNotif.MAX_DURATION_SEC}）",
+                        useLabelAsPlaceholder = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .autoFocus(),
+                    )
+                    Text(
+                        text = "到期后自动取消通知；常用 3 / 5 / 8 / 15 / 30 / 60",
+                        modifier = Modifier.padding(top = 8.dp),
+                        style = MiuixTheme.textStyles.body2,
+                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
+                    )
+                }
+            },
+            onDismissRequest = { showLiveDurationDlg = false },
+            confirmButton = {
+                TextButton(
+                    text = "确认",
+                    enabled = validSec,
+                    onClick = {
+                        if (parsedSec != null && parsedSec != store.resolveActionTipLiveDurationSec()) {
+                            storeFlow.update {
+                                it.copy(actionTipLiveDurationSec = parsedSec)
+                            }
+                            toast("已设置为 ${parsedSec} 秒")
+                        }
+                        showLiveDurationDlg = false
+                    },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.textButtonColorsPrimary(),
+                )
+            },
+            dismissButton = {
+                TextButton(
+                    text = "取消",
+                    onClick = { showLiveDurationDlg = false },
+                    modifier = Modifier.weight(1f),
+                )
+            },
         )
     }
 
@@ -191,7 +262,7 @@ fun useSettingsPage(): ScaffoldExt {
     if (showNotifTextInputDlg) {
         var titleValue by remember { mutableStateOf(store.customNotifTitle) }
         var textValue by remember { mutableStateOf(store.customNotifText) }
-        AlertDialog(
+        PerfAlertDialog(
             properties = DialogProperties(dismissOnClickOutside = false),
             title = {
                 Row(
@@ -225,46 +296,40 @@ fun useSettingsPage(): ScaffoldExt {
                 val textMaxLen = 64
                 Column(
                     modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    CustomOutlinedTextField(
-                        label = { Text("主标题") },
+                    TextField(
                         value = titleValue,
-                        placeholder = { Text(text = "请输入内容，支持变量替换") },
                         onValueChange = {
                             titleValue = (if (it.length > titleMaxLen) it.take(titleMaxLen) else it)
                                 .filter { c -> c !in "\n\r" }
                         },
-                        supportingText = {
-                            Text(
-                                text = "${titleValue.length} / $titleMaxLen",
-                                modifier = Modifier.fillMaxWidth(),
-                                textAlign = TextAlign.End,
-                            )
-                        },
+                        label = "主标题",
+                        useLabelAsPlaceholder = true,
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(12.dp),
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    CustomOutlinedTextField(
-                        label = { Text("副标题") },
+                    Text(
+                        text = "${titleValue.length} / $titleMaxLen",
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.End,
+                    )
+                    TextField(
                         value = textValue,
-                        placeholder = { Text(text = "请输入内容，支持变量替换") },
                         onValueChange = {
                             textValue = if (it.length > textMaxLen) it.take(textMaxLen) else it
                         },
-                        supportingText = {
-                            Text(
-                                text = "${textValue.length} / $textMaxLen",
-                                modifier = Modifier.fillMaxWidth(),
-                                textAlign = TextAlign.End,
-                            )
-                        },
+                        label = "副标题",
+                        useLabelAsPlaceholder = true,
                         maxLines = 4,
                         modifier = Modifier
                             .fillMaxWidth()
                             .autoFocus(),
-                        contentPadding = PaddingValues(12.dp),
+                    )
+                    Text(
+                        text = "${textValue.length} / $textMaxLen",
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.End,
                     )
                 }
             },
@@ -272,30 +337,31 @@ fun useSettingsPage(): ScaffoldExt {
                 showNotifTextInputDlg = false
             },
             confirmButton = {
-                TextButton(onClick = {
-                    context.justHideSoftInput()
-                    if (store.customNotifTitle != textValue || store.customNotifText != textValue) {
-                        storeFlow.update {
-                            it.copy(
-                                customNotifTitle = titleValue,
-                                customNotifText = textValue
-                            )
+                TextButton(
+                    text = "确认",
+                    onClick = {
+                        context.justHideSoftInput()
+                        if (store.customNotifTitle != textValue || store.customNotifText != textValue) {
+                            storeFlow.update {
+                                it.copy(
+                                    customNotifTitle = titleValue,
+                                    customNotifText = textValue
+                                )
+                            }
+                            toast("更新成功")
                         }
-                        toast("更新成功")
-                    }
-                    showNotifTextInputDlg = false
-                }) {
-                    Text(
-                        text = "确认",
-                    )
-                }
+                        showNotifTextInputDlg = false
+                    },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.textButtonColorsPrimary(),
+                )
             },
             dismissButton = {
-                TextButton(onClick = { showNotifTextInputDlg = false }) {
-                    Text(
-                        text = "取消",
-                    )
-                }
+                TextButton(
+                    text = "取消",
+                    onClick = { showNotifTextInputDlg = false },
+                    modifier = Modifier.weight(1f),
+                )
             })
     }
 
@@ -337,7 +403,8 @@ fun useSettingsPage(): ScaffoldExt {
     }
 
     val scrollKey = rememberSaveable { mutableIntStateOf(0) }
-    val (scrollBehavior, scrollState) = useScrollBehaviorState(scrollKey)
+    val scrollState = useScrollBehaviorState(scrollKey)
+    val miuixScrollBehavior = MiuixScrollBehavior()
     LaunchedEffect(null) {
         mainVm.resetPageScrollEvent.collect {
             if (it == BottomNavItem.Settings) {
@@ -347,15 +414,11 @@ fun useSettingsPage(): ScaffoldExt {
     }
     return ScaffoldExt(
         navItem = BottomNavItem.Settings,
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = Modifier.nestedScroll(miuixScrollBehavior.nestedScrollConnection),
         topBar = {
             PerfTopAppBar(
-                scrollBehavior = scrollBehavior,
-                title = {
-                    Text(
-                        text = BottomNavItem.Settings.label,
-                    )
-                },
+                titleText = BottomNavItem.Settings.label,
+                miuixScrollBehavior = miuixScrollBehavior,
             )
         },
     ) { contentPadding ->
@@ -365,189 +428,231 @@ fun useSettingsPage(): ScaffoldExt {
                 .padding(contentPadding)
         ) {
 
-            Text(
-                text = "常规",
-                modifier = Modifier.titleItemPadding(showTop = false),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            val showToastSettingsDlg by vm.showToastSettingsDlgFlow.asMutableState()
-            TextSwitch(
-                title = "触发提示",
-                subtitle = store.actionToast,
-                checked = store.toastWhenClick,
-                onClickLabel = "打开触发提示弹窗",
-                onClick = {
-                    showToastInputDlg = true
-                },
-                suffixIcon = {
-                    PerfCustomIconButton(
-                        size = 32.dp,
-                        iconSize = 20.dp,
-                        onClickLabel = "打开提示设置弹窗",
-                        onClick = { vm.showToastSettingsDlgFlow.update { !it } },
-                        id = R.drawable.ic_page_info,
-                        contentDescription = "提示设置",
-                        tint = if (showToastSettingsDlg) MaterialTheme.colorScheme.primary else LocalContentColor.current,
-                    )
-                },
-                onCheckedChange = {
-                    storeFlow.value = store.copy(
-                        toastWhenClick = it
-                    )
-                })
+            PreferenceGroup(title = "常规", showTop = false) {
+                val showToastSettingsDlg by vm.showToastSettingsDlgFlow.asMutableState()
+                TextSwitch(
+                    title = "触发提示",
+                    subtitle = store.actionToast,
+                    checked = store.toastWhenClick,
+                    onClickLabel = "打开触发提示弹窗",
+                    onClick = {
+                        showToastInputDlg = true
+                    },
+                    suffixIcon = {
+                        PerfCustomIconButton(
+                            size = 32.dp,
+                            iconSize = 20.dp,
+                            onClickLabel = "打开提示设置弹窗",
+                            onClick = { vm.showToastSettingsDlgFlow.update { !it } },
+                            id = R.drawable.ic_page_info,
+                            contentDescription = "提示设置",
+                            tint = if (showToastSettingsDlg) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+                        )
+                    },
+                    onCheckedChange = {
+                        storeFlow.value = store.copy(
+                            toastWhenClick = it
+                        )
+                    })
 
-            AnimatedVisibility(visible = showToastSettingsDlg) {
-                Column {
-                    TextSwitch(
-                        title = "提示样式",
-                        subtitle = "使用系统样式",
-                        suffix = "查看限制",
-                        onSuffixClick = {
-                            mainVm.dialogFlow.updateDialogOptions(
-                                title = "限制说明",
-                                text = "系统 Toast 存在频率限制, 触发过于频繁会被系统强制不显示\n\n如果只使用开屏一类低频率规则可使用系统提示, 否则建议关闭此项使用自定义样式提示",
+                AnimatedVisibility(visible = showToastSettingsDlg) {
+                    Column {
+                        TextMenu(
+                            title = "提示样式",
+                            option = store.resolveActionTipStyle(),
+                            onOptionChange = { option ->
+                                val style = option as ActionTipStyleOption
+                                storeFlow.update {
+                                    it.copy(
+                                        actionTipStyle = style.value,
+                                        useSystemToast = style == ActionTipStyleOption.SystemToast,
+                                    )
+                                }
+                            },
+                        )
+                        if (store.resolveActionTipStyle() == ActionTipStyleOption.LiveNotif) {
+                            TextMenu(
+                                title = "存在时间",
+                                option = ActionTipLiveDurationOption.resolve(
+                                    store.resolveActionTipLiveDurationSec(),
+                                ),
+                                onOptionChange = { option ->
+                                    storeFlow.update {
+                                        it.copy(
+                                            actionTipLiveDurationSec = (option as ActionTipLiveDurationOption).value,
+                                        )
+                                    }
+                                },
                             )
-                        },
-                        checked = store.useSystemToast,
-                        onCheckedChange = {
-                            storeFlow.value = store.copy(
-                                useSystemToast = it
+                            SettingItem(
+                                title = "自定义存在时间",
+                                subtitle = "当前 ${ActionTipLiveDurationOption.labelOf(store.resolveActionTipLiveDurationSec())}，可输入 ${ActionTipNotif.MIN_DURATION_SEC}-${ActionTipNotif.MAX_DURATION_SEC} 秒",
+                                onClick = { showLiveDurationDlg = true },
                             )
-                        })
-                    TextSwitch(
-                        title = "轨迹提示",
-                        subtitle = "显示触发位置信息",
-                        checked = TrackService.isRunning.collectAsState().value,
-                        onCheckedChange = vm.viewModelScope.launchAsFn<Boolean> {
-                            if (it) {
-                                mainVm.dialogFlow.waitResult(
-                                    title = "使用须知",
-                                    text = "开启「轨迹提示」后点击或滑动后会在屏幕上使用悬浮窗绘制轨迹(一段时间后消失)，如果新触摸事件恰好在悬浮窗区域内，可能会被目标应用拒绝，从而导致点击或滑动无响应",
-                                    confirmText = "继续",
-                                )
-                                requiredPermission(context, foregroundServiceSpecialUseState)
-                                requiredPermission(context, notificationState)
-                                requiredPermission(context, canDrawOverlaysState)
-                                TrackService.start()
-                            } else {
-                                TrackService.stop()
-                            }
                         }
-                    )
-                }
-            }
-
-            val subsStatus by vm.subsStatusFlow.collectAsState()
-            TextSwitch(
-                title = "通知文案",
-                subtitle = if (store.useCustomNotifText) {
-                    store.customNotifTitle + " / " + store.customNotifText
-                } else {
-                    subsStatus
-                },
-                checked = store.useCustomNotifText,
-                onClickLabel = "打开修改通知文案弹窗",
-                onClick = { showNotifTextInputDlg = true },
-                onCheckedChange = {
-                    storeFlow.value = store.copy(
-                        useCustomNotifText = it
-                    )
-                })
-
-            TextSwitch(
-                title = "后台隐藏",
-                subtitle = "在「最近任务」隐藏卡片",
-                checked = store.excludeFromRecents,
-                onCheckedChange = vm.viewModelScope.launchAsFn<Boolean> {
-                    if (it) {
-                        mainVm.dialogFlow.waitResult(
-                            title = "后台隐藏",
-                            text = "隐藏卡片后可能导致部分设备无法给任务卡片加锁后台，建议先加锁后再隐藏，若已加锁或没有锁后台机制请继续",
-                            confirmText = "继续",
+                        SettingItem(
+                            title = "样式说明",
+                            subtitle = "悬浮窗 / Toast / Google Live Update 实时通知；可进入系统开关页",
+                            onClick = {
+                                mainVm.dialogFlow.updateDialogOptions(
+                                    title = "提示样式说明",
+                                    text = "• 悬浮窗：无障碍/悬浮窗绘制，兼容最好\n" +
+                                        "• 系统 Toast：受系统频率限制，高触发规则可能不显示\n" +
+                                        "• 实时通知：Android 16 Google Live Updates（状态栏芯片）；需系统允许本应用「实时更新」。一加/ColorOS 等可能改名或裁剪该能力。小米超级岛另需厂商白名单。",
+                                )
+                            },
+                        )
+                        SettingItem(
+                            title = "实时更新系统开关",
+                            subtitle = "打开系统里本应用的 Live Updates / 实时更新设置",
+                            onClick = throttle {
+                                if (!ActionTipNotif.openPromotedSettings()) {
+                                    toast("当前系统无此设置页")
+                                }
+                            },
+                        )
+                        SettingItem(
+                            title = "发送测试通知",
+                            subtitle = "预览当前样式；实时通知会显示是否被系统识别为 Live Update",
+                            onClick = throttle(vm.viewModelScope.launchAsFn {
+                                if (store.resolveActionTipStyle() == ActionTipStyleOption.LiveNotif) {
+                                    requiredPermission(context, notificationState)
+                                }
+                                val sample = store.actionToast
+                                    .replace($$"${1}", "子规则")
+                                    .replace($$"${2}", "规则组")
+                                    .replace($$"${3}", "1")
+                                val result = showActionTip(sample)
+                                if (result != null) {
+                                    toast(result.message)
+                                    if (result.canPostPromoted == false) {
+                                        ActionTipNotif.openPromotedSettings()
+                                    }
+                                } else {
+                                    toast("已发送测试提示")
+                                }
+                            }),
+                        )
+                        TextSwitch(
+                            title = "轨迹提示",
+                            subtitle = "显示触发位置信息",
+                            checked = TrackService.isRunning.collectAsState().value,
+                            onCheckedChange = vm.viewModelScope.launchAsFn<Boolean> {
+                                if (it) {
+                                    mainVm.dialogFlow.waitResult(
+                                        title = "使用须知",
+                                        text = "开启「轨迹提示」后点击或滑动后会在屏幕上使用悬浮窗绘制轨迹(一段时间后消失)，如果新触摸事件恰好在悬浮窗区域内，可能会被目标应用拒绝，从而导致点击或滑动无响应",
+                                        confirmText = "继续",
+                                    )
+                                    requiredPermission(context, foregroundServiceSpecialUseState)
+                                    requiredPermission(context, notificationState)
+                                    requiredPermission(context, canDrawOverlaysState)
+                                    TrackService.start()
+                                } else {
+                                    TrackService.stop()
+                                }
+                            }
                         )
                     }
-                    storeFlow.value = store.copy(
-                        excludeFromRecents = !store.excludeFromRecents
-                    )
-                })
+                }
+
+                val subsStatus by vm.subsStatusFlow.collectAsState()
+                TextSwitch(
+                    title = "通知文案",
+                    subtitle = if (store.useCustomNotifText) {
+                        store.customNotifTitle + " / " + store.customNotifText
+                    } else {
+                        subsStatus
+                    },
+                    checked = store.useCustomNotifText,
+                    onClickLabel = "打开修改通知文案弹窗",
+                    onClick = { showNotifTextInputDlg = true },
+                    onCheckedChange = {
+                        storeFlow.value = store.copy(
+                            useCustomNotifText = it
+                        )
+                    })
+
+                TextSwitch(
+                    title = "后台隐藏",
+                    subtitle = "在「最近任务」隐藏卡片",
+                    checked = store.excludeFromRecents,
+                    onCheckedChange = vm.viewModelScope.launchAsFn<Boolean> {
+                        if (it) {
+                            mainVm.dialogFlow.waitResult(
+                                title = "后台隐藏",
+                                text = "隐藏卡片后可能导致部分设备无法给任务卡片加锁后台，建议先加锁后再隐藏，若已加锁或没有锁后台机制请继续",
+                                confirmText = "继续",
+                            )
+                        }
+                        storeFlow.value = store.copy(
+                            excludeFromRecents = !store.excludeFromRecents
+                        )
+                    })
+            }
 
             val scope = rememberCoroutineScope()
             val lazyOn = remember {
                 storeFlow.mapState(scope) { it.enableBlockA11yAppList }.debounce(300)
                     .stateIn(scope, SharingStarted.Eagerly, store.enableBlockA11yAppList)
             }.collectAsState()
-            AnimatedVisibility(visible = lazyOn.value) {
-                Text(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .titleItemPadding(),
-                    text = "无障碍",
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
+            PreferenceGroup(title = "无障碍") {
+                TextSwitch(
+                    title = "局部关闭",
+                    subtitle = "白名单内关闭服务",
+                    checked = store.enableBlockA11yAppList && shizukuContextFlow.collectAsState().value.ok,
+                    onCheckedChange = vm.viewModelScope.launchAsFn<Boolean> {
+                        if (it) {
+                            showA11yBlockDlg = true
+                        } else {
+                            storeFlow.value = store.copy(enableBlockA11yAppList = false)
+                            fixRestartAutomatorService()
+                        }
+                    },
                 )
+                AnimatedVisibility(visible = lazyOn.value) {
+                    SettingItem(title = "白名单", onClickLabel = "进入无障碍白名单页面", onClick = {
+                        mainVm.navigatePage(BlockA11yAppListRoute)
+                    })
+                }
             }
-            TextSwitch(
-                title = "局部关闭",
-                subtitle = "白名单内关闭服务",
-                checked = store.enableBlockA11yAppList && shizukuContextFlow.collectAsState().value.ok,
-                onCheckedChange = vm.viewModelScope.launchAsFn<Boolean> {
-                    if (it) {
-                        showA11yBlockDlg = true
-                    } else {
-                        storeFlow.value = store.copy(enableBlockA11yAppList = false)
-                        fixRestartAutomatorService()
+
+            PreferenceGroup(title = "外观") {
+                SettingItem(title = "设计", subtitle = "主题 / 模糊 / 悬浮底栏", onClick = {
+                    mainVm.navigatePage(DesignRoute)
+                })
+
+                TextMenu(
+                    title = "深色模式",
+                    option = DarkThemeOption.objects.findOption(store.enableDarkTheme),
+                    onOptionChange = {
+                        storeFlow.update { s -> s.copy(enableDarkTheme = it.value) }
                     }
-                },
-            )
-            AnimatedVisibility(visible = lazyOn.value) {
-                SettingItem(title = "白名单", onClickLabel = "进入无障碍白名单页面", onClick = {
-                    mainVm.navigatePage(BlockA11yAppListRoute)
+                )
+
+                if (AndroidTarget.S) {
+                    TextSwitch(
+                        title = "动态配色",
+                        checked = store.enableDynamicColor,
+                        onCheckedChange = {
+                            storeFlow.update { s -> s.copy(enableDynamicColor = it) }
+                        }
+                    )
+                }
+            }
+
+            PreferenceGroup(title = "其他") {
+                SettingItem(title = "高级设置", onClick = {
+                    mainVm.navigatePage(AdvancedPageRoute)
+                })
+                SettingItem(title = "备份恢复", onClick = {
+                    vm.showBackupDlgFlow.value = true
+                })
+
+                SettingItem(title = "关于", onClick = {
+                    mainVm.navigatePage(AboutRoute)
                 })
             }
-
-            Text(
-                text = "外观",
-                modifier = Modifier.titleItemPadding(),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary,
-            )
-
-            TextMenu(
-                title = "深色模式",
-                option = DarkThemeOption.objects.findOption(store.enableDarkTheme),
-                onOptionChange = {
-                    storeFlow.update { s -> s.copy(enableDarkTheme = it.value) }
-                }
-            )
-
-            if (AndroidTarget.S) {
-                TextSwitch(
-                    title = "动态配色",
-                    checked = store.enableDynamicColor,
-                    onCheckedChange = {
-                        storeFlow.update { s -> s.copy(enableDynamicColor = it) }
-                    }
-                )
-            }
-
-            Text(
-                text = "其他",
-                modifier = Modifier.titleItemPadding(),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary,
-            )
-
-            SettingItem(title = "高级设置", onClick = {
-                mainVm.navigatePage(AdvancedPageRoute)
-            })
-            SettingItem(title = "备份恢复", onClick = {
-                vm.showBackupDlgFlow.value = true
-            })
-
-            SettingItem(title = "关于", onClick = {
-                mainVm.navigatePage(AboutRoute)
-            })
 
             Spacer(modifier = Modifier.height(EmptyHeight))
         }
@@ -562,8 +667,10 @@ private fun BlockA11yDialog(onDismissRequest: () -> Unit) = FullscreenDialog(onD
     val ignoreBatteryOptimizations by ignoreBatteryOptimizationsState.stateFlow.collectAsState()
     val context = LocalActivity.current as MainActivity
     Scaffold(
+        containerColor = MiuixTheme.colorScheme.surface,
         topBar = {
             PerfTopAppBar(
+                titleText = "局部关闭",
                 navigationIcon = {
                     PerfIconButton(
                         imageVector = PerfIcon.Close,
@@ -571,25 +678,26 @@ private fun BlockA11yDialog(onDismissRequest: () -> Unit) = FullscreenDialog(onD
                         onClick = onDismissRequest,
                     )
                 },
-                title = {
-                    Text(text = "局部关闭")
-                },
             )
         },
         bottomBar = {
-            BottomAppBar {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = itemHorizontalPadding, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Spacer(modifier = Modifier.weight(1f))
                 TextButton(
+                    text = "继续",
                     enabled = shizukuContext.ok && statusRunning && ignoreBatteryOptimizations,
                     onClick = mainVm.viewModelScope.launchAsFn {
                         onDismissRequest()
                         delay(200)
                         storeFlow.update { it.copy(enableBlockA11yAppList = true) }
-                    }
-                ) {
-                    Text(text = "继续")
-                }
-                Spacer(modifier = Modifier.width(itemHorizontalPadding))
+                    },
+                    colors = ButtonDefaults.textButtonColorsPrimary(),
+                )
             }
         },
     ) { contentPadding ->
@@ -697,7 +805,7 @@ private fun RequiredTextItem(
             }
             .padding(horizontal = 4.dp),
     ) {
-        val lineHeightDp = LocalDensity.current.run { LocalTextStyle.current.lineHeight.toDp() }
+        val lineHeightDp = LocalDensity.current.let { LocalTextStyle.current.lineHeightDp(it) }
         Spacer(
             modifier = Modifier
                 .padding(vertical = (lineHeightDp - 4.dp) / 2)

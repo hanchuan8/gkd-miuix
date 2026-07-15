@@ -2,18 +2,12 @@ package li.songe.gkd.ui.component
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,6 +19,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -47,6 +44,10 @@ import li.songe.gkd.util.getGroupEnable
 import li.songe.gkd.util.launchAsFn
 import li.songe.gkd.util.throttle
 import li.songe.gkd.util.toast
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.CardDefaults
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import java.util.Objects
 
 
@@ -161,25 +162,25 @@ fun RuleGroupCard(
     })
     val containerColor = animateColorAsState(
         if (isSelected || highlighted) {
-            MaterialTheme.colorScheme.primaryContainer
+            MiuixTheme.colorScheme.primaryContainer
         } else {
-            MaterialTheme.colorScheme.surfaceContainer
+            MiuixTheme.colorScheme.surfaceContainer
         },
         tween()
     )
+    val contentColor = MiuixTheme.colorScheme.onSurfaceContainer
     Card(
         modifier = modifier
             .padding(horizontal = 8.dp)
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick,
-                onClickLabel = "打开规则详情弹窗",
-                onLongClickLabel = "进入多选模式"
-            ),
-        shape = MaterialTheme.shapes.extraSmall,
-        colors = CardDefaults.cardColors(
-            containerColor = containerColor.value
+            .semantics {
+                onClick(label = "打开规则详情弹窗", action = null)
+                onLongClick(label = "进入多选模式", action = null)
+            },
+        colors = CardDefaults.defaultColors(
+            color = containerColor.value
         ),
+        onClick = onClick,
+        onLongPress = onLongClick,
     ) {
         val canRest = if (inGlobalAppPage) {
             excludeData.appIds.contains(appId)
@@ -204,7 +205,7 @@ fun RuleGroupCard(
                     GroupNameText(
                         modifier = Modifier.fillMaxWidth(),
                         text = group.name,
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MiuixTheme.textStyles.body1,
                         isGlobal = group is RawSubscription.RawGlobalGroup,
                         maxLines = 1,
                         softWrap = false,
@@ -218,16 +219,16 @@ fun RuleGroupCard(
                                 softWrap = false,
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.fillMaxWidth(),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MiuixTheme.textStyles.body2,
+                                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                             )
                         }
                     } else {
                         Text(
                             text = group.errorDesc ?: "未知错误",
                             modifier = Modifier.fillMaxWidth(),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.error
+                            style = MiuixTheme.textStyles.body2,
+                            color = MiuixTheme.colorScheme.error
                         )
                     }
                 }
@@ -269,9 +270,9 @@ fun RuleGroupCard(
                     imageVector = PerfIcon.Block,
                     contentDescription = "此规则已排除部分页面",
                     tint = if (isSelectedMode) {
-                        LocalContentColor.current.copy(alpha = 0.5f)
+                        contentColor.copy(alpha = 0.5f)
                     } else {
-                        LocalContentColor.current
+                        contentColor
                     },
                     modifier = Modifier
                         .padding(top = 4.dp, end = 4.dp)

@@ -2,14 +2,16 @@ package li.songe.gkd.permission
 
 import android.app.Activity
 import androidx.activity.compose.LocalActivity
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import kotlinx.coroutines.flow.MutableStateFlow
 import li.songe.gkd.MainActivity
+import li.songe.gkd.ui.component.PerfAlertDialog
 import li.songe.gkd.util.stopCoroutine
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextButton
+import androidx.compose.ui.Modifier
 
 data class AuthReason(
     val text: () -> String,
@@ -21,7 +23,7 @@ fun AuthDialog(authReasonFlow: MutableStateFlow<AuthReason?>) {
     val authAction = authReasonFlow.collectAsState().value
     val context = LocalActivity.current as MainActivity
     if (authAction != null) {
-        AlertDialog(
+        PerfAlertDialog(
             title = {
                 Text(text = "权限请求")
             },
@@ -30,17 +32,22 @@ fun AuthDialog(authReasonFlow: MutableStateFlow<AuthReason?>) {
             },
             onDismissRequest = { authReasonFlow.value = null },
             confirmButton = {
-                TextButton(onClick = {
-                    authReasonFlow.value = null
-                    authAction.confirm?.invoke(context)
-                }) {
-                    Text(text = "确认")
-                }
+                TextButton(
+                    text = "确认",
+                    onClick = {
+                        authReasonFlow.value = null
+                        authAction.confirm?.invoke(context)
+                    },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.textButtonColorsPrimary(),
+                )
             },
             dismissButton = {
-                TextButton(onClick = { authReasonFlow.value = null }) {
-                    Text(text = "取消")
-                }
+                TextButton(
+                    text = "取消",
+                    onClick = { authReasonFlow.value = null },
+                    modifier = Modifier.weight(1f),
+                )
             }
         )
     }

@@ -24,8 +24,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
+import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -44,7 +43,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.core.view.WindowCompat
@@ -236,6 +234,10 @@ fun ImagePreviewPage(route: ImagePreviewRoute) {
                 val currentUri = currentPreviewItem?.uri
                 PerfTopAppBar(
                     modifier = Modifier.background(Color.Black.copy(alpha = 0.5f)),
+                    color = Color.Transparent,
+                    titleColor = Color.White,
+                    largeTitleColor = Color.White,
+                    subtitleColor = Color.White.copy(alpha = 0.8f),
                     navigationIcon = {
                         PerfIconButton(
                             imageVector = PerfIcon.ArrowBack,
@@ -243,63 +245,19 @@ fun ImagePreviewPage(route: ImagePreviewRoute) {
                             colors = IconButtonDefaults.iconButtonColors(contentColor = Color.White)
                         )
                     },
-                    title = {
+                    titleText = run {
                         val baseTitle = route.title?.takeIf { it.isNotBlank() }
                         val itemTitle = currentPreviewItem
                             ?.let(::buildPreviewSubtitle)
                             ?.takeIf { it.isNotBlank() && it != baseTitle }
-                        when {
-                            baseTitle != null && itemTitle != null -> {
-                                Column {
-                                    Text(
-                                        text = baseTitle,
-                                        maxLines = 1,
-                                        softWrap = false,
-                                        overflow = TextOverflow.MiddleEllipsis,
-                                        style = MaterialTheme.typography.titleLarge.copy(
-                                            color = Color.White,
-                                            fontWeight = FontWeight.Medium
-                                        )
-                                    )
-                                    Text(
-                                        text = itemTitle,
-                                        maxLines = 1,
-                                        softWrap = false,
-                                        overflow = TextOverflow.MiddleEllipsis,
-                                        style = MaterialTheme.typography.titleSmall.copy(
-                                            color = Color.White.copy(alpha = 0.8f),
-                                            fontWeight = FontWeight.Normal
-                                        )
-                                    )
-                                }
-                            }
-
-                            baseTitle != null -> {
-                                Text(
-                                    text = baseTitle,
-                                    maxLines = 1,
-                                    softWrap = false,
-                                    overflow = TextOverflow.MiddleEllipsis,
-                                    style = MaterialTheme.typography.titleLarge.copy(
-                                        color = Color.White,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                )
-                            }
-
-                            itemTitle != null -> {
-                                Text(
-                                    text = itemTitle,
-                                    maxLines = 1,
-                                    softWrap = false,
-                                    overflow = TextOverflow.MiddleEllipsis,
-                                    style = MaterialTheme.typography.titleLarge.copy(
-                                        color = Color.White,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                )
-                            }
-                        }
+                        baseTitle ?: itemTitle.orEmpty()
+                    },
+                    subtitle = run {
+                        val baseTitle = route.title?.takeIf { it.isNotBlank() }
+                        val itemTitle = currentPreviewItem
+                            ?.let(::buildPreviewSubtitle)
+                            ?.takeIf { it.isNotBlank() && it != baseTitle }
+                        if (baseTitle != null && itemTitle != null) itemTitle else ""
                     },
                     actions = {
                         if (currentUri != null && URLUtil.isNetworkUrl(currentUri)) {
@@ -310,12 +268,6 @@ fun ImagePreviewPage(route: ImagePreviewRoute) {
                             )
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent,
-                        navigationIconContentColor = Color.White,
-                        titleContentColor = Color.White,
-                        actionIconContentColor = Color.White
-                    )
                 )
 
                 if (previewItems.size > 1) {

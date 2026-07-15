@@ -16,13 +16,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
@@ -34,12 +30,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -56,25 +50,24 @@ import li.songe.gkd.data.RawSubscription
 import li.songe.gkd.data.SubsConfig
 import li.songe.gkd.db.DbSet
 import li.songe.gkd.ui.component.AppNameText
+import li.songe.gkd.ui.component.AppPageScaffold
 import li.songe.gkd.ui.component.EmptyText
 import li.songe.gkd.ui.component.FixedTimeText
 import li.songe.gkd.ui.component.GroupNameText
 import li.songe.gkd.ui.component.LocalNumberCharWidth
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
-import li.songe.gkd.ui.component.PerfTopAppBar
-import li.songe.gkd.ui.component.TowLineText
+import li.songe.gkd.ui.component.TextListDialog
 import li.songe.gkd.ui.component.animateListItem
 import li.songe.gkd.ui.component.measureNumberTextWidth
 import li.songe.gkd.ui.component.useListScrollState
-import li.songe.gkd.ui.component.useSubs
 import li.songe.gkd.ui.component.waitResult
 import li.songe.gkd.ui.share.ListPlaceholder
 import li.songe.gkd.ui.share.LocalMainViewModel
-import li.songe.gkd.ui.share.noRippleClickable
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.iconTextSize
 import li.songe.gkd.ui.style.itemHorizontalPadding
+import li.songe.gkd.ui.style.lineHeightDp
 import li.songe.gkd.ui.style.scaffoldPadding
 import li.songe.gkd.util.launchAsFn
 import li.songe.gkd.util.mapState
@@ -96,75 +89,49 @@ fun ActionLogPage(route: ActionLogRoute) {
     val vm = viewModel { ActionLogVm(route) }
     val resetKey = rememberSaveable { mutableIntStateOf(0) }
     val list = vm.pagingDataFlow.collectAsLazyPagingItems()
-    val (scrollBehavior, listState) = useListScrollState(resetKey, list.itemCount > 0)
-    val timeTextWidth = measureNumberTextWidth(MaterialTheme.typography.bodySmall)
+    val listState = useListScrollState(resetKey, list.itemCount > 0)
+    val timeTextWidth = measureNumberTextWidth(MiuixTheme.textStyles.footnote1)
 
-    Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection), topBar = {
-        PerfTopAppBar(
-            scrollBehavior = scrollBehavior,
-            navigationIcon = {
+    AppPageScaffold(
+        title = "触发记录",
+        navigationIcon = {
+            PerfIconButton(
+                imageVector = PerfIcon.ArrowBack,
+                onClick = {
+                    mainVm.popPage()
+                },
+            )
+        },
+        actions = {
+            if (list.itemCount > 0) {
                 PerfIconButton(
-                    imageVector = PerfIcon.ArrowBack,
-                    onClick = {
-                        mainVm.popPage()
-                    },
+                    imageVector = PerfIcon.Delete,
+                    onClick = throttle(fn = mainVm.viewModelScope.launchAsFn {
+                        val text = if (subsId != null) {
+                            "确定删除当前订阅所有触发记录?"
+                        } else if (appId != null) {
+                            "确定删除当前应用所有触发记录?"
+                        } else {
+                            "确定删除所有触发记录?"
+                        }
+                        mainVm.dialogFlow.waitResult(
+                            title = "删除记录",
+                            text = text,
+                            error = true,
+                        )
+                        if (subsId != null) {
+                            DbSet.actionLogDao.deleteSubsAll(subsId)
+                        } else if (appId != null) {
+                            DbSet.actionLogDao.deleteAppAll(appId)
+                        } else {
+                            DbSet.actionLogDao.deleteAll()
+                        }
+                        toast("删除成功")
+                    })
                 )
-            },
-            title = {
-                val title = "触发记录"
-                val titleModifier = Modifier.noRippleClickable {
-                    resetKey.intValue++
-                }
-                if (subsId != null) {
-                    TowLineText(
-                        title = title,
-                        subtitle = useSubs(subsId)?.name ?: subsId.toString(),
-                        modifier = titleModifier,
-                    )
-                } else if (appId != null) {
-                    TowLineText(
-                        title = title,
-                        subtitle = appId,
-                        showApp = true,
-                        modifier = titleModifier,
-                    )
-                } else {
-                    Text(
-                        text = title,
-                        modifier = titleModifier,
-                    )
-                }
-            },
-            actions = {
-                if (list.itemCount > 0) {
-                    PerfIconButton(
-                        imageVector = PerfIcon.Delete,
-                        onClick = throttle(fn = mainVm.viewModelScope.launchAsFn {
-                            val text = if (subsId != null) {
-                                "确定删除当前订阅所有触发记录?"
-                            } else if (appId != null) {
-                                "确定删除当前应用所有触发记录?"
-                            } else {
-                                "确定删除所有触发记录?"
-                            }
-                            mainVm.dialogFlow.waitResult(
-                                title = "删除记录",
-                                text = text,
-                                error = true,
-                            )
-                            if (subsId != null) {
-                                DbSet.actionLogDao.deleteSubsAll(subsId)
-                            } else if (appId != null) {
-                                DbSet.actionLogDao.deleteAppAll(appId)
-                            } else {
-                                DbSet.actionLogDao.deleteAll()
-                            }
-                            toast("删除成功")
-                        })
-                    )
-                }
-            })
-    }, content = { contentPadding ->
+            }
+        },
+    ) { contentPadding ->
         CompositionLocalProvider(
             LocalNumberCharWidth provides timeTextWidth
         ) {
@@ -198,7 +165,7 @@ fun ActionLogPage(route: ActionLogRoute) {
                 }
             }
         }
-    })
+    }
 
     vm.showActionLogFlow.collectAsState().value?.let {
         ActionLogDialog(
@@ -242,7 +209,7 @@ private fun ActionLogCard(
             Row(
                 modifier = Modifier
                     .padding(start = itemHorizontalPadding / 4)
-                    .clip(MaterialTheme.shapes.extraSmall)
+                    .clip(RoundedCornerShape(8.dp))
                     .clickable(onClick = throttle {
                         mainVm.navigatePage(
                             AppConfigRoute(
@@ -255,18 +222,17 @@ private fun ActionLogCard(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.primary) {
+                CompositionLocalProvider(LocalContentColor provides MiuixTheme.colorScheme.primary) {
                     Spacer(
                         modifier = Modifier
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.secondary)
+                            .background(MiuixTheme.colorScheme.secondary)
                             .size(4.dp)
                     )
                     AppNameText(appId = actionLog.appId, modifier = Modifier.weight(1f))
                     PerfIcon(
                         imageVector = PerfIcon.KeyboardArrowRight,
-                        modifier = Modifier
-                            .iconTextSize()
+                        modifier = Modifier.iconTextSize(),
                     )
                 }
             }
@@ -274,10 +240,11 @@ private fun ActionLogCard(
         Row(
             modifier = Modifier
                 .padding(start = itemHorizontalPadding / 4)
+                .clip(RoundedCornerShape(8.dp))
                 .clickable(onClick = onClick)
                 .fillMaxWidth()
                 .height(IntrinsicSize.Min)
-                .padding(start = itemHorizontalPadding / 4)
+                .padding(start = itemHorizontalPadding / 4),
         ) {
             if (appId == null) {
                 Spacer(modifier = Modifier.width(2.dp))
@@ -286,7 +253,7 @@ private fun ActionLogCard(
                 modifier = Modifier
                     .fillMaxHeight()
                     .width(2.dp)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
+                    .background(MiuixTheme.colorScheme.primaryContainer),
             )
             Spacer(modifier = Modifier.width(8.dp))
             Column(
@@ -294,10 +261,10 @@ private fun ActionLogCard(
             ) {
                 FixedTimeText(
                     text = actionLog.date,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.secondary,
+                    style = MiuixTheme.textStyles.footnote1,
+                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                 )
-                CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.bodyMedium) {
+                CompositionLocalProvider(LocalTextStyle provides MiuixTheme.textStyles.body2) {
                     val showActivityId = actionLog.showActivityId
                     if (showActivityId != null) {
                         Text(
@@ -309,14 +276,14 @@ private fun ActionLogCard(
                     } else {
                         Text(
                             text = "null",
-                            color = LocalContentColor.current.copy(alpha = 0.5f),
+                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary.copy(alpha = 0.5f),
                         )
                     }
                     if (subsId == null) {
                         Row {
                             Text(text = subscription?.name ?: "id=${actionLog.subsId}")
-                            val lineHeightDp = LocalDensity.current.run {
-                                LocalTextStyle.current.lineHeight.toDp()
+                            val lineHeightDp = LocalDensity.current.let {
+                                LocalTextStyle.current.lineHeightDp(it)
                             }
                             Row(
                                 modifier = Modifier
@@ -326,12 +293,12 @@ private fun ActionLogCard(
                             ) {
                                 Text(
                                     text = "v${item.first.subsVersion}",
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.tertiary,
+                                    style = MiuixTheme.textStyles.footnote2,
+                                    color = MiuixTheme.colorScheme.primary,
                                     modifier = Modifier
-                                        .clip(MaterialTheme.shapes.extraSmall)
-                                        .background(MaterialTheme.colorScheme.tertiaryContainer)
-                                        .padding(horizontal = 2.dp),
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(MiuixTheme.colorScheme.primaryContainer)
+                                        .padding(horizontal = 4.dp),
                                 )
                             }
                         }
@@ -358,7 +325,7 @@ private fun ActionLogCard(
                             Text(
                                 text = ruleDesc,
                                 modifier = Modifier.padding(start = 8.dp),
-                                color = LocalContentColor.current.copy(alpha = 0.8f),
+                                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                             )
                         }
                     }
@@ -390,83 +357,72 @@ private fun ActionLogDialog(
         ExcludeData.parse(subsConfig?.exclude)
     }
 
-    Dialog(onDismissRequest = onDismissRequest) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            shape = RoundedCornerShape(16.dp),
-        ) {
-            ItemText(
-                text = "查看规则",
-                onClick = {
-                    onDismissRequest()
-                    if (actionLog.groupType == SubsConfig.AppGroupType) {
-                        mainVm.navigatePage(
-                            SubsAppGroupListRoute(
-                                actionLog.subsId, actionLog.appId, actionLog.groupKey
-                            )
+    val subs = remember(actionLog.subsId) {
+        subsMapFlow.mapState(scope) { it[actionLog.subsId] }
+    }.collectAsState().value
+    val group = subs?.globalGroups?.find { g -> g.key == actionLog.groupKey }
+    val appChecked = if (
+        actionLog.groupType == SubsConfig.GlobalGroupType && group != null
+    ) {
+        getGlobalGroupChecked(
+            subs,
+            oldExclude,
+            group,
+            actionLog.appId,
+        )
+    } else {
+        null
+    }
+    val activityDisabled = actionLog.activityId?.let {
+        oldExclude.activityIds.contains(actionLog.appId to it)
+    }
+
+    TextListDialog(
+        onDismiss = onDismissRequest,
+        title = "操作",
+        textList = buildList {
+            add("查看规则" to {
+                if (actionLog.groupType == SubsConfig.AppGroupType) {
+                    mainVm.navigatePage(
+                        SubsAppGroupListRoute(
+                            actionLog.subsId, actionLog.appId, actionLog.groupKey
                         )
-                    } else if (actionLog.groupType == SubsConfig.GlobalGroupType) {
-                        mainVm.navigatePage(
-                            SubsGlobalGroupListRoute(
-                                actionLog.subsId, actionLog.groupKey
-                            )
+                    )
+                } else if (actionLog.groupType == SubsConfig.GlobalGroupType) {
+                    mainVm.navigatePage(
+                        SubsGlobalGroupListRoute(
+                            actionLog.subsId, actionLog.groupKey
                         )
+                    )
+                }
+            })
+            if (appChecked != null) {
+                add(
+                    (if (appChecked) "在此应用禁用" else "移除在此应用的禁用") to vm.viewModelScope.launchAsFn {
+                        val nextConfig = subsConfig ?: SubsConfig(
+                            type = SubsConfig.GlobalGroupType,
+                            subsId = actionLog.subsId,
+                            groupKey = actionLog.groupKey,
+                        )
+                        val newSubsConfig = nextConfig.copy(
+                            exclude = oldExclude
+                                .copy(
+                                    appIds = oldExclude.appIds
+                                        .toMutableMap()
+                                        .apply {
+                                            set(actionLog.appId, appChecked)
+                                        })
+                                .stringify()
+                        )
+                        DbSet.subsConfigDao.insert(newSubsConfig)
+                        toast("更新成功")
                     }
-                }
-            )
-            HorizontalDivider()
-
-            if (actionLog.groupType == SubsConfig.GlobalGroupType) {
-                val subs = remember(actionLog.subsId) {
-                    subsMapFlow.mapState(scope) { it[actionLog.subsId] }
-                }.collectAsState().value
-                val group = subs?.globalGroups?.find { g -> g.key == actionLog.groupKey }
-                val appChecked = if (group != null) {
-                    getGlobalGroupChecked(
-                        subs,
-                        oldExclude,
-                        group,
-                        actionLog.appId,
-                    )
-                } else {
-                    null
-                }
-                if (appChecked != null) {
-                    ItemText(
-                        text = if (appChecked) "在此应用禁用" else "移除在此应用的禁用",
-                        onClick = vm.viewModelScope.launchAsFn {
-                            val subsConfig = subsConfig ?: SubsConfig(
-                                type = SubsConfig.GlobalGroupType,
-                                subsId = actionLog.subsId,
-                                groupKey = actionLog.groupKey,
-                            )
-                            val newSubsConfig = subsConfig.copy(
-                                exclude = oldExclude
-                                    .copy(
-                                        appIds = oldExclude.appIds
-                                            .toMutableMap()
-                                            .apply {
-                                                set(actionLog.appId, appChecked)
-                                            })
-                                    .stringify()
-                            )
-                            DbSet.subsConfigDao.insert(newSubsConfig)
-                            toast("更新成功")
-                        }
-                    )
-                    HorizontalDivider()
-                }
+                )
             }
-
-            if (actionLog.activityId != null) {
-                val disabled =
-                    oldExclude.activityIds.contains(actionLog.appId to actionLog.activityId)
-                ItemText(
-                    text = if (disabled) "移除在此页面的禁用" else "在此页面禁用",
-                    onClick = vm.viewModelScope.launchAsFn {
-                        val subsConfig = if (actionLog.groupType == SubsConfig.AppGroupType) {
+            if (actionLog.activityId != null && activityDisabled != null) {
+                add(
+                    (if (activityDisabled) "移除在此页面的禁用" else "在此页面禁用") to vm.viewModelScope.launchAsFn {
+                        val nextConfig = if (actionLog.groupType == SubsConfig.AppGroupType) {
                             subsConfig ?: SubsConfig(
                                 type = SubsConfig.AppGroupType,
                                 subsId = actionLog.subsId,
@@ -480,7 +436,7 @@ private fun ActionLogDialog(
                                 groupKey = actionLog.groupKey,
                             )
                         }
-                        val newSubsConfig = subsConfig.copy(
+                        val newSubsConfig = nextConfig.copy(
                             exclude = oldExclude
                                 .switch(
                                     actionLog.appId,
@@ -492,25 +448,7 @@ private fun ActionLogDialog(
                         toast("更新成功")
                     }
                 )
-                HorizontalDivider()
             }
-        }
-    }
-}
-
-@Composable
-fun ItemText(
-    text: String,
-    color: Color = Color.Unspecified,
-    onClick: () -> Unit
-) {
-    val modifier = Modifier
-        .clickable(onClick = throttle(onClick))
-        .fillMaxWidth()
-        .padding(16.dp)
-    Text(
-        modifier = modifier,
-        text = text,
-        color = color,
+        },
     )
 }

@@ -7,8 +7,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -47,12 +47,11 @@ fun QueryPkgAuthCard(
             textAlign = TextAlign.Center,
         )
         TextButton(
+            text = "申请权限",
             enabled = !updateAppMutex.state.collectAsState().value,
             onClick = throttle(fn = mainVm.viewModelScope.launchAsFn {
                 requiredPermission(context, canQueryPkgState)
-            })
-        ) {
-            Text(text = "申请权限")
-        }
+            }),
+        )
     }
 }

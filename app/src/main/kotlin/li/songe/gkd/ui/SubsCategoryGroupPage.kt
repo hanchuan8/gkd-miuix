@@ -12,24 +12,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import li.songe.gkd.ui.component.PerfDropdownMenu
+import li.songe.gkd.ui.component.PerfDropdownMenuItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -39,15 +33,14 @@ import kotlinx.serialization.Serializable
 import li.songe.gkd.data.CategoryConfig
 import li.songe.gkd.db.DbSet
 import li.songe.gkd.ui.component.AppNameText
+import li.songe.gkd.ui.component.AppPageScaffold
 import li.songe.gkd.ui.component.EmptyText
 import li.songe.gkd.ui.component.MenuGroupCard
 import li.songe.gkd.ui.component.MenuItemCheckbox
 import li.songe.gkd.ui.component.MenuItemRadioButton
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
-import li.songe.gkd.ui.component.PerfTopAppBar
 import li.songe.gkd.ui.component.RuleGroupCard
-import li.songe.gkd.ui.component.TowLineText
 import li.songe.gkd.ui.component.useListScrollState
 import li.songe.gkd.ui.component.waitResult
 import li.songe.gkd.ui.icon.ResetSettings
@@ -55,7 +48,6 @@ import li.songe.gkd.ui.icon.ToggleMid
 import li.songe.gkd.ui.share.ListPlaceholder
 import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.ui.share.asMutableState
-import li.songe.gkd.ui.share.noRippleClickable
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.iconTextSize
 import li.songe.gkd.ui.style.scaffoldPadding
@@ -81,32 +73,17 @@ fun SubsCategoryGroupPage(route: SubsCategoryGroupRoute) {
     val category = vm.categoryFlow.collectAsState().value
     val subsConfigs = vm.subsConfigsFlow.collectAsState().value
     val categoryConfig = vm.categoryConfigFlow.collectAsState().value
-    val scrollKey = rememberSaveable { mutableIntStateOf(0) }
     val groupSize = apps.sumOf { it.groups.size }
-    val (scrollBehavior, listState) = useListScrollState(scrollKey, groupSize)
-    Scaffold(modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection), topBar = {
-        PerfTopAppBar(scrollBehavior = scrollBehavior, navigationIcon = {
+    val listState = useListScrollState(groupSize)
+    AppPageScaffold(
+        title = category.name,
+        navigationIcon = {
             PerfIconButton(
                 imageVector = PerfIcon.ArrowBack,
                 onClick = mainVm::popPage,
             )
-        }, title = {
-            val modifier = Modifier.noRippleClickable(onClick = { scrollKey.intValue++ })
-            val desc = category.desc
-            if (desc != null) {
-                TowLineText(
-                    title = category.name,
-                    subtitle = desc,
-                    modifier = modifier,
-                )
-            } else {
-                TowLineText(
-                    title = subs.name,
-                    subtitle = category.name,
-                    modifier = modifier,
-                )
-            }
-        }, actions = {
+        },
+        actions = {
             PerfIconButton(
                 imageVector = when (getCategoryEnable(category, categoryConfig)) {
                     false -> PerfIcon.ToggleOff
@@ -155,35 +132,32 @@ fun SubsCategoryGroupPage(route: SubsCategoryGroupRoute) {
                     modifier = Modifier
                         .wrapContentSize(Alignment.TopStart)
                 ) {
-                    DropdownMenu(
+                    PerfDropdownMenu(
                         expanded = expanded,
                         onDismissRequest = { expanded = false },
                     ) {
                         if (groupSize > 0) {
-                            DropdownMenuItem(
-                                leadingIcon = { PerfIcon(imageVector = ResetSettings) },
-                                text = { Text(text = "重置") },
+                            PerfDropdownMenuItem(
+                                startAction = { PerfIcon(imageVector = ResetSettings) },
+                                text = "重置",
                                 onClick = throttle(vm.viewModelScope.launchAsFn {
                                     expanded = false
                                     resetAll()
                                 })
                             )
                         }
-                        DropdownMenuItem(
-                            leadingIcon = { PerfIcon(imageVector = PerfIcon.Edit) },
-                            text = { Text(text = "编辑") },
+                        PerfDropdownMenuItem(
+                            startAction = { PerfIcon(imageVector = PerfIcon.Edit) },
+                            text = "编辑",
                             onClick = {
                                 expanded = false
                                 vm.showEditCategoryFlow.value = true
                             }
                         )
-                        DropdownMenuItem(
-                            leadingIcon = { PerfIcon(imageVector = PerfIcon.Delete) },
-                            text = { Text(text = "删除") },
-                            colors = MenuDefaults.itemColors(
-                                textColor = MaterialTheme.colorScheme.error,
-                                leadingIconColor = MaterialTheme.colorScheme.error,
-                            ),
+                        PerfDropdownMenuItem(
+                            startAction = { PerfIcon(imageVector = PerfIcon.Delete) },
+                            text = "删除",
+                            titleColor = MaterialTheme.colorScheme.error,
                             onClick = throttle(mainVm.viewModelScope.launchAsFn {
                                 expanded = false
                                 mainVm.dialogFlow.waitResult(
@@ -223,7 +197,7 @@ fun SubsCategoryGroupPage(route: SubsCategoryGroupRoute) {
             Box(
                 modifier = Modifier.wrapContentSize(Alignment.TopStart)
             ) {
-                DropdownMenu(expanded = sortExpanded, onDismissRequest = { sortExpanded = false }) {
+                PerfDropdownMenu(expanded = sortExpanded, onDismissRequest = { sortExpanded = false }) {
                     MenuGroupCard(inTop = true, title = "排序") {
                         var sortType by vm.sortTypeFlow.asMutableState()
                         AppSortOption.objects.forEach { option ->
@@ -254,8 +228,8 @@ fun SubsCategoryGroupPage(route: SubsCategoryGroupRoute) {
                     }
                 }
             }
-        })
-    }) { contentPadding ->
+        },
+    ) { contentPadding ->
         LazyColumn(
             modifier = Modifier.scaffoldPadding(contentPadding),
             state = listState,

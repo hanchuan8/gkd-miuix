@@ -13,12 +13,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.IconButton
+import li.songe.gkd.ui.component.PerfDropdownMenu
+import li.songe.gkd.ui.component.PerfDropdownMenuItem
+import top.yukonga.miuix.kmp.basic.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -32,7 +31,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
@@ -46,7 +44,7 @@ import li.songe.gkd.data.RawSubscription
 import li.songe.gkd.store.storeFlow
 import li.songe.gkd.ui.component.AnimatedBooleanContent
 import li.songe.gkd.ui.component.AnimationFloatingActionButton
-import li.songe.gkd.ui.component.AppNameText
+import li.songe.gkd.ui.component.AppPageScaffold
 import li.songe.gkd.ui.component.BatchActionButtonGroup
 import li.songe.gkd.ui.component.EmptyText
 import li.songe.gkd.ui.component.MenuGroupCard
@@ -54,7 +52,6 @@ import li.songe.gkd.ui.component.MenuItemCheckbox
 import li.songe.gkd.ui.component.MenuItemRadioButton
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
-import li.songe.gkd.ui.component.PerfTopAppBar
 import li.songe.gkd.ui.component.RuleGroupCard
 import li.songe.gkd.ui.component.animateListItem
 import li.songe.gkd.ui.component.toGroupState
@@ -62,7 +59,6 @@ import li.songe.gkd.ui.component.useListScrollState
 import li.songe.gkd.ui.icon.BackCloseIcon
 import li.songe.gkd.ui.share.ListPlaceholder
 import li.songe.gkd.ui.share.LocalMainViewModel
-import li.songe.gkd.ui.share.noRippleClickable
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.iconTextSize
 import li.songe.gkd.ui.style.scaffoldPadding
@@ -92,7 +88,7 @@ fun AppConfigPage(route: AppConfigRoute) {
     val groupSize by vm.groupSizeFlow.collectAsState()
     val firstLoading by vm.firstLoadingFlow.collectAsState()
     val resetKey = rememberSaveable { mutableIntStateOf(0) }
-    val (scrollBehavior, listState) = useListScrollState(
+    val listState = useListScrollState(
         resetKey,
         groupSize > 0,
         firstLoading,
@@ -134,131 +130,117 @@ fun AppConfigPage(route: AppConfigRoute) {
     BackHandler(isSelectedMode) {
         vm.isSelectedModeFlow.value = false
     }
-    Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            PerfTopAppBar(scrollBehavior = scrollBehavior, navigationIcon = {
-                IconButton(onClick = throttle {
-                    if (isSelectedMode) {
-                        vm.isSelectedModeFlow.value = false
-                    } else {
-                        mainVm.popPage()
-                    }
-                }) {
-                    BackCloseIcon(backOrClose = !isSelectedMode)
-                }
-            }, title = {
-                val titleModifier = Modifier.noRippleClickable {
-                    resetKey.intValue++
-                }
+    val appInfoMap by appInfoMapFlow.collectAsState()
+    val pageTitle = if (isSelectedMode) {
+        if (selectedDataSet.isNotEmpty()) selectedDataSet.size.toString() else " "
+    } else {
+        appInfoMap[appId]?.name ?: appId
+    }
+    AppPageScaffold(
+        title = pageTitle,
+        navigationIcon = {
+            IconButton(onClick = throttle {
                 if (isSelectedMode) {
-                    Text(
-                        modifier = titleModifier,
-                        text = if (selectedDataSet.isNotEmpty()) selectedDataSet.size.toString() else "",
-                    )
+                    vm.isSelectedModeFlow.value = false
                 } else {
-                    AppNameText(
-                        modifier = titleModifier,
-                        appId = appId
-                    )
+                    mainVm.popPage()
                 }
-            }, actions = {
-                var expanded by remember { mutableStateOf(false) }
-                AnimatedBooleanContent(
-                    targetState = isSelectedMode,
-                    contentAlignment = Alignment.TopEnd,
-                    contentTrue = {
-                        Row {
-                            PerfIconButton(
-                                imageVector = PerfIcon.ContentCopy,
-                                enabled = selectedDataSet.any { a -> a.appId != null },
-                                onClick = throttle(vm.viewModelScope.launchAsFn(Dispatchers.Default) {
-                                    val selectGroups = mutableListOf<RawSubscription.RawAppGroup>()
-                                    vm.subsPairsFlow.value.forEach { (entry, groups) ->
-                                        groups.forEach { g ->
-                                            if (g is RawSubscription.RawAppGroup && selectedDataSet.any { v -> entry.subsItem.id == v.subsId && g.key == v.groupKey }) {
-                                                selectGroups.add(g)
-                                            }
+            }) {
+                BackCloseIcon(backOrClose = !isSelectedMode)
+            }
+        },
+        actions = {
+            var expanded by remember { mutableStateOf(false) }
+            AnimatedBooleanContent(
+                targetState = isSelectedMode,
+                contentAlignment = Alignment.TopEnd,
+                contentTrue = {
+                    Row {
+                        PerfIconButton(
+                            imageVector = PerfIcon.ContentCopy,
+                            enabled = selectedDataSet.any { a -> a.appId != null },
+                            onClick = throttle(vm.viewModelScope.launchAsFn(Dispatchers.Default) {
+                                val selectGroups = mutableListOf<RawSubscription.RawAppGroup>()
+                                vm.subsPairsFlow.value.forEach { (entry, groups) ->
+                                    groups.forEach { g ->
+                                        if (g is RawSubscription.RawAppGroup && selectedDataSet.any { v -> entry.subsItem.id == v.subsId && g.key == v.groupKey }) {
+                                            selectGroups.add(g)
                                         }
                                     }
-                                    val a = RawSubscription.RawApp(
-                                        id = appId,
-                                        name = appInfoMapFlow.value[appId]?.name,
-                                        groups = selectGroups,
-                                    )
-                                    copyText(toJson5String(a))
-                                })
+                                }
+                                val a = RawSubscription.RawApp(
+                                    id = appId,
+                                    name = appInfoMapFlow.value[appId]?.name,
+                                    groups = selectGroups,
+                                )
+                                copyText(toJson5String(a))
+                            })
+                        )
+                        BatchActionButtonGroup(vm, selectedDataSet)
+                        PerfIconButton(imageVector = PerfIcon.MoreVert, onClick = {
+                            expanded = true
+                        })
+                    }
+                },
+                contentFalse = {
+                    Row {
+                        PerfIconButton(imageVector = PerfIcon.History, onClick = throttle {
+                            mainVm.navigatePage(ActionLogRoute(appId = appId))
+                        })
+                        PerfIconButton(imageVector = PerfIcon.Sort, onClick = {
+                            expanded = true
+                        })
+                    }
+                },
+            )
+            Box(
+                modifier = Modifier.wrapContentSize(Alignment.TopStart)
+            ) {
+                key(isSelectedMode) {
+                    PerfDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        if (isSelectedMode) {
+                            PerfDropdownMenuItem(
+                                text = "全选",
+                                onClick = {
+                                    expanded = false
+                                    vm.selectAll()
+                                }
                             )
-                            BatchActionButtonGroup(vm, selectedDataSet)
-                            PerfIconButton(imageVector = PerfIcon.MoreVert, onClick = {
-                                expanded = true
-                            })
-                        }
-                    },
-                    contentFalse = {
-                        Row {
-                            PerfIconButton(imageVector = PerfIcon.History, onClick = throttle {
-                                mainVm.navigatePage(ActionLogRoute(appId = appId))
-                            })
-                            PerfIconButton(imageVector = PerfIcon.Sort, onClick = {
-                                expanded = true
-                            })
-                        }
-                    },
-                )
-                Box(
-                    modifier = Modifier.wrapContentSize(Alignment.TopStart)
-                ) {
-                    key(isSelectedMode) {
-                        DropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = { expanded = false }
-                        ) {
-                            if (isSelectedMode) {
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(text = "全选")
-                                    },
-                                    onClick = {
-                                        expanded = false
-                                        vm.selectAll()
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(text = "反选")
-                                    },
-                                    onClick = {
-                                        expanded = false
-                                        vm.invertSelect()
-                                    }
-                                )
-                            } else {
-                                MenuGroupCard(inTop = true, title = "排序") {
-                                    val handleItem: (RuleSortOption) -> Unit = throttle { v ->
-                                        storeFlow.update { s -> s.copy(appRuleSort = v.value) }
-                                    }
-                                    RuleSortOption.objects.forEach { s ->
-                                        MenuItemRadioButton(
-                                            text = s.label,
-                                            selected = ruleSortType == s,
-                                            onClick = {
-                                                handleItem(s)
-                                            },
-                                        )
-                                    }
+                            PerfDropdownMenuItem(
+                                text = "反选",
+                                onClick = {
+                                    expanded = false
+                                    vm.invertSelect()
                                 }
-                                MenuGroupCard(title = "筛选") {
-                                    MenuItemCheckbox(
-                                        text = "未启用",
-                                        stateFlow = vm.showDisabledRuleFlow,
+                            )
+                        } else {
+                            MenuGroupCard(inTop = true, title = "排序") {
+                                val handleItem: (RuleSortOption) -> Unit = throttle { v ->
+                                    storeFlow.update { s -> s.copy(appRuleSort = v.value) }
+                                }
+                                RuleSortOption.objects.forEach { s ->
+                                    MenuItemRadioButton(
+                                        text = s.label,
+                                        selected = ruleSortType == s,
+                                        onClick = {
+                                            handleItem(s)
+                                        },
                                     )
                                 }
+                            }
+                            MenuGroupCard(title = "筛选") {
+                                MenuItemCheckbox(
+                                    text = "未启用",
+                                    stateFlow = vm.showDisabledRuleFlow,
+                                )
                             }
                         }
                     }
                 }
-            })
+            }
         },
         floatingActionButton = {
             AnimationFloatingActionButton(

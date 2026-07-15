@@ -2,28 +2,20 @@ package li.songe.gkd.ui.home
 
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -35,14 +27,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.flow.drop
@@ -59,12 +50,12 @@ import li.songe.gkd.ui.component.AnimatedIconButton
 import li.songe.gkd.ui.component.AnimationFloatingActionButton
 import li.songe.gkd.ui.component.AppBarTextField
 import li.songe.gkd.ui.component.AppIcon
-import li.songe.gkd.ui.component.AppNameText
 import li.songe.gkd.ui.component.EmptyText
 import li.songe.gkd.ui.component.MenuGroupCard
 import li.songe.gkd.ui.component.MenuItemCheckbox
 import li.songe.gkd.ui.component.MenuItemRadioButton
 import li.songe.gkd.ui.component.PerfCheckbox
+import li.songe.gkd.ui.component.PerfDropdownMenu
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
 import li.songe.gkd.ui.component.PerfTopAppBar
@@ -75,18 +66,20 @@ import li.songe.gkd.ui.component.useListScrollState
 import li.songe.gkd.ui.share.ListPlaceholder
 import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.ui.share.asMutableState
-import li.songe.gkd.ui.share.noRippleClickable
 import li.songe.gkd.ui.style.EmptyHeight
-import li.songe.gkd.ui.style.appItemPadding
 import li.songe.gkd.util.AppGroupOption
 import li.songe.gkd.util.AppSortOption
 import li.songe.gkd.util.appListAuthAbnormalFlow
-import li.songe.gkd.util.getUpDownTransform
 import li.songe.gkd.util.ruleSummaryFlow
 import li.songe.gkd.util.switchItem
 import li.songe.gkd.util.throttle
 import li.songe.gkd.util.updateAllAppInfo
 import li.songe.gkd.util.updateAppMutex
+import top.yukonga.miuix.kmp.basic.BasicComponent
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.PullToRefresh
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun useAppListPage(): ScaffoldExt {
@@ -105,10 +98,15 @@ fun useAppListPage(): ScaffoldExt {
     }
     val showSearchBar by vm.showSearchBarFlow.collectAsState()
     val refreshing by updateAppMutex.state.collectAsState()
-    val pullToRefreshState = rememberPullToRefreshState()
     val editWhiteListMode by vm.editWhiteListModeFlow.collectAsState()
     val scrollKey = rememberSaveable { mutableIntStateOf(0) }
-    val (scrollBehavior, listState) = useListScrollState(scrollKey)
+    val listState = useListScrollState(scrollKey)
+    val miuixScrollBehavior = MiuixScrollBehavior()
+    val titleText = when {
+        showSearchBar -> ""
+        editWhiteListMode -> "应用白名单"
+        else -> BottomNavItem.AppList.label
+    }
     LaunchedEffect(null) {
         listOf(
             canQueryPkgState.stateFlow,
@@ -128,7 +126,7 @@ fun useAppListPage(): ScaffoldExt {
     }
     return ScaffoldExt(
         navItem = BottomNavItem.AppList,
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = Modifier.nestedScroll(miuixScrollBehavior.nestedScrollConnection),
         topBar = {
             DisposableEffect(null) {
                 onDispose {
@@ -138,52 +136,35 @@ fun useAppListPage(): ScaffoldExt {
                     vm.editWhiteListModeFlow.value = false
                 }
             }
-            PerfTopAppBar(scrollBehavior = scrollBehavior, title = {
-                val firstShowSearchBar = remember { showSearchBar }
-                if (showSearchBar) {
-                    BackHandler {
-                        if (!context.justHideSoftInput()) {
-                            vm.showSearchBarFlow.value = false
-                        }
-                    }
-                    AppBarTextField(
-                        value = searchStr,
-                        onValueChange = { newValue -> vm.searchStrFlow.value = newValue.trim() },
-                        hint = "请输入应用名称/ID",
-                        modifier = if (firstShowSearchBar) Modifier else Modifier.autoFocus(),
-                    )
-                } else {
-                    val titleModifier = Modifier
-                        .noRippleClickable(
-                            onClick = throttle {
-                                scrollKey.intValue++
-                            }
-                        )
-                    if (editWhiteListMode) {
-                        BackHandler {
-                            vm.editWhiteListModeFlow.value = false
-                        }
-                    }
-                    AnimatedContent(
-                        targetState = editWhiteListMode,
-                        transitionSpec = { getUpDownTransform() },
-                    ) { localEditWhiteListMode ->
-                        if (localEditWhiteListMode) {
-                            Text(
-                                modifier = titleModifier,
-                                text = "应用白名单",
-                            )
-                        } else {
-                            Text(
-                                modifier = titleModifier,
-                                text = BottomNavItem.AppList.label,
-                            )
-                        }
+            if (editWhiteListMode && !showSearchBar) {
+                BackHandler {
+                    vm.editWhiteListModeFlow.value = false
+                }
+            }
+            if (showSearchBar) {
+                BackHandler {
+                    if (!context.justHideSoftInput()) {
+                        vm.showSearchBarFlow.value = false
                     }
                 }
-            }, actions = {
+            }
+            val firstShowSearchBar = remember { showSearchBar }
+            PerfTopAppBar(
+                titleText = titleText,
+                miuixScrollBehavior = miuixScrollBehavior,
+                bottomContent = {
+                    if (showSearchBar) {
+                        AppBarTextField(
+                            value = searchStr,
+                            onValueChange = { newValue -> vm.searchStrFlow.value = newValue.trim() },
+                            hint = "请输入应用名称/ID",
+                            modifier = if (firstShowSearchBar) Modifier else Modifier.autoFocus(),
+                        )
+                    }
+                },
+                actions = {
                 if (appListAuthAbnormalFlow.collectAsState().value) {
-                    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.error) {
+                    CompositionLocalProvider(LocalContentColor provides MiuixTheme.colorScheme.error) {
                         PerfIconButton(
                             imageVector = PerfIcon.WarningAmber,
                             contentDescription = canQueryPkgState.name + "异常",
@@ -197,7 +178,7 @@ fun useAppListPage(): ScaffoldExt {
                     }
                 }
                 PerfIconButton(
-                    imageVector = PerfIcon.Block,
+                    imageVector = PerfIcon.Edit,
                     contentDescription = "切换白名单编辑模式",
                     onClickLabel = if (editWhiteListMode) "退出编辑" else "进入编辑",
                     colors = IconButtonDefaults.iconButtonColors(
@@ -228,49 +209,44 @@ fun useAppListPage(): ScaffoldExt {
                     contentDescription = if (showSearchBar) "关闭搜索" else "搜索应用列表",
                 )
                 var expanded by remember { mutableStateOf(false) }
-                PerfIconButton(
-                    imageVector = PerfIcon.Sort,
-                    contentDescription = "排序筛选",
-                    onClick = {
-                        expanded = true
-                    }
-                )
-                Box(
-                    modifier = Modifier
-                        .wrapContentSize(Alignment.TopStart)
+                PerfDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                    anchor = {
+                        PerfIconButton(
+                            imageVector = PerfIcon.Sort,
+                            contentDescription = "排序筛选",
+                            onClick = { expanded = true },
+                        )
+                    },
                 ) {
-                    DropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        MenuGroupCard(inTop = true, title = "排序") {
-                            var sortType by vm.sortTypeFlow.asMutableState()
-                            AppSortOption.objects.forEach { option ->
-                                MenuItemRadioButton(
-                                    text = option.label,
-                                    selected = sortType == option,
-                                    onClick = { sortType = option },
-                                )
-                            }
-                        }
-                        MenuGroupCard(title = "分组") {
-                            var appGroupType by vm.appGroupTypeFlow.asMutableState()
-                            AppGroupOption.normalObjects.forEach { option ->
-                                val newValue = option.invert(appGroupType)
-                                MenuItemCheckbox(
-                                    enabled = newValue != 0,
-                                    text = option.label,
-                                    checked = option.include(appGroupType),
-                                    onClick = { appGroupType = newValue },
-                                )
-                            }
-                        }
-                        MenuGroupCard(title = "筛选") {
-                            MenuItemCheckbox(
-                                text = "白名单",
-                                stateFlow = vm.showBlockAppFlow,
+                    MenuGroupCard(inTop = true, title = "排序") {
+                        var sortType by vm.sortTypeFlow.asMutableState()
+                        AppSortOption.objects.forEach { option ->
+                            MenuItemRadioButton(
+                                text = option.label,
+                                selected = sortType == option,
+                                onClick = { sortType = option },
                             )
                         }
+                    }
+                    MenuGroupCard(title = "分组") {
+                        var appGroupType by vm.appGroupTypeFlow.asMutableState()
+                        AppGroupOption.normalObjects.forEach { option ->
+                            val newValue = option.invert(appGroupType)
+                            MenuItemCheckbox(
+                                enabled = newValue != 0,
+                                text = option.label,
+                                checked = option.include(appGroupType),
+                                onClick = { appGroupType = newValue },
+                            )
+                        }
+                    }
+                    MenuGroupCard(title = "筛选") {
+                        MenuItemCheckbox(
+                            text = "白名单",
+                            stateFlow = vm.showBlockAppFlow,
+                        )
                     }
                 }
             })
@@ -287,15 +263,25 @@ fun useAppListPage(): ScaffoldExt {
         }
     ) { contentPadding ->
         val canQueryPkg by canQueryPkgState.stateFlow.collectAsState()
-        PullToRefreshBox(
-            modifier = Modifier.padding(contentPadding),
-            state = pullToRefreshState,
+        val layoutDirection = LocalLayoutDirection.current
+        // 顶距放进 LazyColumn.contentPadding，列表才能滚进顶栏下方，毛玻璃才能采样到内容
+        PullToRefresh(
             isRefreshing = refreshing,
-            onRefresh = { updateAllAppInfo() }
+            onRefresh = { updateAllAppInfo() },
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    start = contentPadding.calculateStartPadding(layoutDirection),
+                    end = contentPadding.calculateEndPadding(layoutDirection),
+                ),
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                state = listState
+                state = listState,
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    top = contentPadding.calculateTopPadding(),
+                    bottom = contentPadding.calculateBottomPadding(),
+                ),
             ) {
                 if (!canQueryPkg) {
                     item(key = 1, contentType = 1) {
@@ -333,7 +319,6 @@ fun useAppListPage(): ScaffoldExt {
                     )
                 }
                 item(ListPlaceholder.KEY, ListPlaceholder.TYPE) {
-                    Spacer(modifier = Modifier.height(EmptyHeight))
                     if (appInfos.isEmpty() && searchStr.isNotEmpty()) {
                         EmptyText(text = if (vm.appFilter.showAllAppFlow.collectAsState().value) "暂无搜索结果" else "暂无搜索结果，或修改筛选")
                         Spacer(modifier = Modifier.height(EmptyHeight / 2))
@@ -354,22 +339,17 @@ private fun AppItemCard(
     val vm = viewModel<HomeVm>()
     val editWhiteListMode = vm.editWhiteListModeFlow.collectAsState().value
     val inWhiteList = blockMatchAppListFlow.collectAsState().value.contains(appInfo.id)
-    Row(
+    val summary = desc ?: appInfo.id
+    // MIUIX 独立色块卡片，与设置 PreferenceGroup / 订阅卡片一致（surfaceContainer）
+    Card(
         modifier = Modifier
-            .clickable(
-                onClick = throttle {
-                    if (vm.editWhiteListModeFlow.value) {
-                        blockMatchAppListFlow.update { it.switchItem(appInfo.id) }
-                    } else {
-                        context.justHideSoftInput()
-                        mainVm.navigatePage(AppConfigRoute(appInfo.id))
-                    }
-                })
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 4.dp)
             .clearAndSetSemantics {
                 contentDescription = if (editWhiteListMode) {
                     appInfo.name
                 } else {
-                    "应用：${appInfo.name}，${desc ?: appInfo.id}"
+                    "应用：${appInfo.name}，$summary"
                 }
                 if (inWhiteList) {
                     stateDescription = "已加入白名单"
@@ -377,43 +357,46 @@ private fun AppItemCard(
                     stateDescription = "未加入白名单"
                 }
                 onClick(
-                    label = if (editWhiteListMode) if (inWhiteList) "从白名单中移除" else "加入白名单" else "进入规则汇总页面",
-                    action = null
+                    label = if (editWhiteListMode) {
+                        if (inWhiteList) "从白名单中移除" else "加入白名单"
+                    } else {
+                        "进入规则汇总页面"
+                    },
+                    action = null,
                 )
-            }
-            .appItemPadding(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            },
+        insideMargin = PaddingValues(0.dp),
     ) {
-        AppIcon(appId = appInfo.id)
-        Column(
-            modifier = Modifier
-                .weight(1f),
-            verticalArrangement = Arrangement.Center
-        ) {
-            AppNameText(appInfo = appInfo)
-            Text(
-                text = desc ?: appInfo.id,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                softWrap = false
-            )
-        }
-        if (editWhiteListMode) {
-            PerfCheckbox(
-                key = appInfo.id,
-                checked = inWhiteList,
-            )
-        } else if (inWhiteList) {
-            PerfIcon(
-                modifier = Modifier
-                    .padding(2.dp)
-                    .size(20.dp),
-                imageVector = PerfIcon.Block,
-                tint = MaterialTheme.colorScheme.secondary,
-            )
-        }
+        BasicComponent(
+            title = appInfo.name,
+            summary = summary,
+            onClick = throttle {
+                if (vm.editWhiteListModeFlow.value) {
+                    blockMatchAppListFlow.update { it.switchItem(appInfo.id) }
+                } else {
+                    context.justHideSoftInput()
+                    mainVm.navigatePage(AppConfigRoute(appInfo.id))
+                }
+            },
+            startAction = {
+                AppIcon(appId = appInfo.id)
+            },
+            endActions = {
+                if (editWhiteListMode) {
+                    PerfCheckbox(
+                        key = appInfo.id,
+                        checked = inWhiteList,
+                    )
+                } else if (inWhiteList) {
+                    PerfIcon(
+                        modifier = Modifier
+                            .padding(2.dp)
+                            .size(20.dp),
+                        imageVector = PerfIcon.WhiteList,
+                        tint = MiuixTheme.colorScheme.primary,
+                    )
+                }
+            },
+        )
     }
 }

@@ -10,11 +10,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import li.songe.gkd.ui.component.PerfDropdownMenu
+import li.songe.gkd.ui.component.PerfDropdownMenuItem
+import top.yukonga.miuix.kmp.basic.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -26,7 +24,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -35,13 +32,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
 import li.songe.gkd.db.DbSet
 import li.songe.gkd.ui.component.AnimationFloatingActionButton
+import li.songe.gkd.ui.component.AppPageScaffold
 import li.songe.gkd.ui.component.BatchActionButtonGroup
 import li.songe.gkd.ui.component.EmptyText
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
-import li.songe.gkd.ui.component.PerfTopAppBar
 import li.songe.gkd.ui.component.RuleGroupCard
-import li.songe.gkd.ui.component.TowLineText
 import li.songe.gkd.ui.component.animateListItem
 import li.songe.gkd.ui.component.toGroupState
 import li.songe.gkd.ui.component.useListScrollState
@@ -49,7 +45,6 @@ import li.songe.gkd.ui.component.waitResult
 import li.songe.gkd.ui.icon.BackCloseIcon
 import li.songe.gkd.ui.share.ListPlaceholder
 import li.songe.gkd.ui.share.LocalMainViewModel
-import li.songe.gkd.ui.share.noRippleClickable
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.scaffoldPadding
 import li.songe.gkd.util.getUpDownTransform
@@ -93,7 +88,7 @@ fun SubsGlobalGroupListPage(route: SubsGlobalGroupListRoute) {
     }
 
     val resetKey = rememberSaveable { mutableIntStateOf(0) }
-    val (scrollBehavior, listState) = useListScrollState(resetKey, globalGroups.isEmpty())
+    val listState = useListScrollState(resetKey, globalGroups.isEmpty())
     if (focusGroupKey != null) {
         LaunchedEffect(null) {
             if (vm.focusGroupFlow?.value != null) {
@@ -104,122 +99,107 @@ fun SubsGlobalGroupListPage(route: SubsGlobalGroupListRoute) {
             }
         }
     }
-    Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            PerfTopAppBar(scrollBehavior = scrollBehavior, navigationIcon = {
-                IconButton(onClick = throttle {
-                    if (isSelectedMode) {
-                        vm.isSelectedModeFlow.value = false
-                    } else {
-                        mainVm.popPage()
-                    }
-                }) {
-                    BackCloseIcon(backOrClose = !isSelectedMode)
-                }
-            }, title = {
-                val titleModifier = Modifier.noRippleClickable { resetKey.intValue++ }
+    AppPageScaffold(
+        title = if (isSelectedMode) {
+            selectedDataSet.size.toString().ifEmpty { " " }
+        } else {
+            "全局规则"
+        },
+        navigationIcon = {
+            IconButton(onClick = throttle {
                 if (isSelectedMode) {
-                    Text(
-                        modifier = titleModifier,
-                        text = selectedDataSet.size.toString(),
-                    )
+                    vm.isSelectedModeFlow.value = false
                 } else {
-                    TowLineText(
-                        modifier = titleModifier,
-                        title = subs.name,
-                        subtitle = "全局规则"
-                    )
+                    mainVm.popPage()
                 }
-            }, actions = {
-                var expanded by remember { mutableStateOf(false) }
-                AnimatedContent(
-                    targetState = isSelectedMode,
-                    transitionSpec = { getUpDownTransform() },
-                    contentAlignment = Alignment.TopEnd,
-                ) {
-                    if (it) {
-                        Row {
-                            BatchActionButtonGroup(vm, selectedDataSet)
-                            if (editable) {
-                                PerfIconButton(
-                                    imageVector = PerfIcon.Delete,
-                                    onClick = throttle(
-                                        vm.viewModelScope.launchAsFn(
-                                            Dispatchers.Default
-                                        ) {
-                                            mainVm.dialogFlow.waitResult(
-                                                title = "删除规则",
-                                                text = "删除当前所选规则?",
-                                                error = true,
-                                            )
-                                            val keys = selectedDataSet.mapNotNull { g ->
-                                                g.groupKey
-                                            }
-                                            vm.isSelectedModeFlow.value = false
-                                            updateSubscription(
-                                                subs.copy(
-                                                    globalGroups = globalGroups.filterNot { g ->
-                                                        keys.contains(g.key)
-                                                    }
-                                                )
-                                            )
-                                            DbSet.subsConfigDao.batchDeleteGlobalGroupConfig(
-                                                subsItemId,
-                                                keys
-                                            )
-                                            toast("删除成功")
-                                        })
-                                )
-                            }
+            }) {
+                BackCloseIcon(backOrClose = !isSelectedMode)
+            }
+        },
+        actions = {
+            var expanded by remember { mutableStateOf(false) }
+            AnimatedContent(
+                targetState = isSelectedMode,
+                transitionSpec = { getUpDownTransform() },
+                contentAlignment = Alignment.TopEnd,
+            ) {
+                if (it) {
+                    Row {
+                        BatchActionButtonGroup(vm, selectedDataSet)
+                        if (editable) {
                             PerfIconButton(
-                                imageVector = PerfIcon.MoreVert,
-                                onClick = {
-                                    expanded = true
-                                })
+                                imageVector = PerfIcon.Delete,
+                                onClick = throttle(
+                                    vm.viewModelScope.launchAsFn(
+                                        Dispatchers.Default
+                                    ) {
+                                        mainVm.dialogFlow.waitResult(
+                                            title = "删除规则",
+                                            text = "删除当前所选规则?",
+                                            error = true,
+                                        )
+                                        val keys = selectedDataSet.mapNotNull { g ->
+                                            g.groupKey
+                                        }
+                                        vm.isSelectedModeFlow.value = false
+                                        updateSubscription(
+                                            subs.copy(
+                                                globalGroups = globalGroups.filterNot { g ->
+                                                    keys.contains(g.key)
+                                                }
+                                            )
+                                        )
+                                        DbSet.subsConfigDao.batchDeleteGlobalGroupConfig(
+                                            subsItemId,
+                                            keys
+                                        )
+                                        toast("删除成功")
+                                    })
+                            )
                         }
+                        PerfIconButton(
+                            imageVector = PerfIcon.MoreVert,
+                            onClick = {
+                                expanded = true
+                            })
                     }
                 }
-                if (isSelectedMode) {
-                    Box(
-                        modifier = Modifier
-                            .wrapContentSize(Alignment.TopStart)
+            }
+            if (isSelectedMode) {
+                Box(
+                    modifier = Modifier
+                        .wrapContentSize(Alignment.TopStart)
+                ) {
+                    PerfDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
                     ) {
-                        DropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = { expanded = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = {
-                                    Text(text = "全选")
-                                },
-                                onClick = {
-                                    expanded = false
-                                    vm.selectedDataSetFlow.value = globalGroups.map {
-                                        it.toGroupState(
-                                            subsId = subsItemId,
-                                        )
-                                    }.toSet()
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = {
-                                    Text(text = "反选")
-                                },
-                                onClick = {
-                                    expanded = false
-                                    val newSelectedIds = globalGroups.map {
-                                        it.toGroupState(
-                                            subsId = subsItemId,
-                                        )
-                                    }.toSet() - selectedDataSet
-                                    vm.selectedDataSetFlow.value = newSelectedIds
-                                }
-                            )
-                        }
+                        PerfDropdownMenuItem(
+                            text = "全选",
+                            onClick = {
+                                expanded = false
+                                vm.selectedDataSetFlow.value = globalGroups.map {
+                                    it.toGroupState(
+                                        subsId = subsItemId,
+                                    )
+                                }.toSet()
+                            }
+                        )
+                        PerfDropdownMenuItem(
+                            text = "反选",
+                            onClick = {
+                                expanded = false
+                                val newSelectedIds = globalGroups.map {
+                                    it.toGroupState(
+                                        subsId = subsItemId,
+                                    )
+                                }.toSet() - selectedDataSet
+                                vm.selectedDataSetFlow.value = newSelectedIds
+                            }
+                        )
                     }
                 }
-            })
+            }
         },
         floatingActionButton = {
             if (editable) {

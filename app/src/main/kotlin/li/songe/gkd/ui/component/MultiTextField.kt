@@ -6,24 +6,20 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.MutableStateFlow
 import li.songe.gkd.MainActivity
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.basic.TextField
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
 fun MultiTextField(
@@ -35,26 +31,17 @@ fun MultiTextField(
 ) {
     val text by textFlow.collectAsState()
     Box(modifier = modifier) {
-        val textColors = TextFieldDefaults.colors(
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-            errorIndicatorColor = Color.Transparent,
-            disabledIndicatorColor = Color.Transparent,
-        )
-        CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.bodyLarge) {
-            val modifier = Modifier
+        TextField(
+            value = text,
+            onValueChange = { textFlow.value = it },
+            modifier = Modifier
                 .autoFocus(immediateFocus = immediateFocus)
                 .fillMaxSize()
-                .optimizedImePadding()
-            TextField(
-                value = text,
-                onValueChange = { textFlow.value = it },
-                placeholder = if (placeholderText != null) ({ Text(text = placeholderText) }) else null,
-                modifier = modifier,
-                shape = RectangleShape,
-                colors = textColors,
-            )
-        }
+                .optimizedImePadding(),
+            label = placeholderText.orEmpty(),
+            useLabelAsPlaceholder = true,
+            textStyle = MiuixTheme.textStyles.main,
+        )
         val actualSize = indicatorSize ?: text.length
         if (actualSize > 0 && text.isNotEmpty()) {
             Text(
@@ -62,16 +49,15 @@ fun MultiTextField(
                 modifier = Modifier
                     .padding(8.dp)
                     .align(Alignment.TopEnd)
-                    .clip(MaterialTheme.shapes.extraSmall)
-                    .background(MaterialTheme.colorScheme.surfaceContainer)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(MiuixTheme.colorScheme.surfaceContainer)
                     .padding(horizontal = 2.dp),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.tertiary,
+                style = MiuixTheme.textStyles.body2,
+                color = MiuixTheme.colorScheme.secondary,
             )
         }
     }
 }
-
 
 private fun Modifier.optimizedImePadding() = composed {
     val context = LocalActivity.current as MainActivity
