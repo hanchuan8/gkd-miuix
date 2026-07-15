@@ -8,6 +8,14 @@
 - **界面**：MIUIX（顶栏 / 底栏 / 设置分组 / 对话框 / 图标等）
 - **能力**：与上游 GKD 相同的选择器、订阅规则、快照与自动化能力
 
+## 界面预览（MIUIX）
+
+| 首页 | 订阅 | 应用 | 设置 |
+| :---: | :---: | :---: | :---: |
+| ![首页](docs/screenshots/01-home.png) | ![订阅](docs/screenshots/02-subs.png) | ![应用](docs/screenshots/03-apps.png) | ![设置](docs/screenshots/04-settings.png) |
+
+> 悬浮底栏、大标题顶栏、分组卡片与开关等组件来自 [compose-miuix-ui](https://github.com/compose-miuix-ui/miuix)。
+
 ## 免责声明
 
 **本项目遵循 [GPL-3.0](/LICENSE) 开源，仅供学习交流，禁止用于商业或非法用途。**
