@@ -1,5 +1,7 @@
 package li.songe.gkd.ui.component
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,7 +16,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import li.songe.gkd.ui.component.PerfAlertDialog
-import androidx.compose.material3.MaterialTheme
 import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -64,8 +65,8 @@ fun RuleGroupDialog(
                         .align(Alignment.TopStart)
                         .fillMaxWidth()
                         .heightIn(min = 100.dp, max = maxHeight)
-                        .clip(MaterialTheme.shapes.extraSmall)
-                        .background(MaterialTheme.colorScheme.secondaryContainer)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(MiuixTheme.colorScheme.secondaryContainer)
                         .verticalScroll(rememberScrollState())
                         .clearAndSetSemantics {
                             contentDescription = "规则内容"
@@ -95,8 +96,8 @@ fun RuleGroupDialog(
                                 )
                             },
                             modifier = Modifier.padding(4.dp),
-                            color = MaterialTheme.colorScheme.secondary,
-                            style = MaterialTheme.typography.bodySmall,
+                            color = MiuixTheme.colorScheme.secondary,
+                            style = MiuixTheme.textStyles.footnote1,
                         )
                     }
                 }
@@ -109,18 +110,18 @@ fun RuleGroupDialog(
                         .padding(4.dp)
                         .size(24.dp),
                     imageVector = PerfIcon.ContentCopy,
-                    tint = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.75f),
+                    tint = MiuixTheme.colorScheme.secondary.copy(alpha = 0.75f),
                 )
                 Text(
                     text = group.cacheStr.length.toString(),
                     modifier = Modifier
                         .padding(end = 4.dp, bottom = 4.dp)
                         .align(Alignment.BottomEnd)
-                        .clip(MaterialTheme.shapes.extraSmall)
-                        .background(MaterialTheme.colorScheme.surfaceContainer)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(MiuixTheme.colorScheme.surfaceContainer)
                         .padding(horizontal = 2.dp),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.tertiary,
+                    style = MiuixTheme.textStyles.footnote1,
+                    color = MiuixTheme.colorScheme.secondary,
                 )
             }
         },

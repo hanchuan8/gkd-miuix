@@ -1,5 +1,7 @@
 package li.songe.gkd.ui
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import android.app.Activity
 import android.content.Context
 import android.media.projection.MediaProjectionManager
@@ -23,7 +25,6 @@ import li.songe.gkd.ui.component.PerfAlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
 import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -307,18 +308,18 @@ fun AdvancedPage() {
                 ) {
                     Text(
                         text = "状态",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MiuixTheme.textStyles.body2,
+                        color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                     )
                     PerfIcon(
                         modifier = Modifier
-                            .clip(MaterialTheme.shapes.extraSmall)
+                            .clip(RoundedCornerShape(4.dp))
                             .clickable(onClickLabel = "打开 Shizuku 状态弹窗", onClick = throttle {
                                 showShizukuState = true
                             })
-                            .iconTextSize(textStyle = MaterialTheme.typography.titleSmall),
+                            .iconTextSize(textStyle = MiuixTheme.textStyles.subtitle),
                         imageVector = PerfIcon.Api,
-                        tint = MaterialTheme.colorScheme.primary,
+                        tint = MiuixTheme.colorScheme.primary,
                         contentDescription = "Shizuku 状态",
                     )
                 }
@@ -370,7 +371,7 @@ fun AdvancedPage() {
                             onClick = { showHttpSettingDlg = !showHttpSettingDlg },
                             id = R.drawable.ic_page_info,
                             contentDescription = "HTTP设置",
-                            tint = if (showHttpSettingDlg) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+                            tint = if (showHttpSettingDlg) MiuixTheme.colorScheme.primary else LocalContentColor.current,
                         )
                     },
                     checked = httpServerRunning,
@@ -386,7 +387,7 @@ fun AdvancedPage() {
                 )
                 AnimatedVisibility(visible = httpServerRunning) {
                     CompositionLocalProvider(
-                        LocalTextStyle provides MaterialTheme.typography.bodyMedium
+                        LocalTextStyle provides MiuixTheme.textStyles.body2
                     ) {
                         Column(
                             modifier = Modifier.itemPadding()
@@ -396,7 +397,7 @@ fun AdvancedPage() {
                                 val localUrl = "http://127.0.0.1:${store.httpServerPort}"
                                 Text(
                                     text = localUrl,
-                                    color = MaterialTheme.colorScheme.primary,
+                                    color = MiuixTheme.colorScheme.primary,
                                     style = LocalTextStyle.current.copy(textDecoration = TextDecoration.Underline),
                                     modifier = Modifier.clickable(onClick = throttle {
                                         mainVm.openUrl(localUrl)
@@ -409,7 +410,7 @@ fun AdvancedPage() {
                                 val lanUrl = "http://${host}:${store.httpServerPort}"
                                 Text(
                                     text = lanUrl,
-                                    color = MaterialTheme.colorScheme.primary,
+                                    color = MiuixTheme.colorScheme.primary,
                                     style = LocalTextStyle.current.copy(textDecoration = TextDecoration.Underline),
                                     modifier = Modifier.clickable(onClick = throttle {
                                         mainVm.openUrl(lanUrl)

@@ -1,5 +1,7 @@
 package li.songe.gkd.ui
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.graphics.res.animatedVectorResource
 import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
@@ -19,7 +21,6 @@ import androidx.compose.foundation.verticalScroll
 import li.songe.gkd.ui.component.PerfAlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
 import androidx.compose.runtime.Composable
@@ -121,7 +122,7 @@ fun AboutPage() {
                         Text(
                             modifier = Modifier.clickable { openUri(META.commitUrl) },
                             text = META.tagName ?: META.commitId.substring(0, 16),
-                            color = MaterialTheme.colorScheme.primary,
+                            color = MiuixTheme.colorScheme.primary,
                             style = LocalTextStyle.current.copy(textDecoration = TextDecoration.Underline),
                         )
                     }
@@ -182,15 +183,15 @@ fun AboutPage() {
                 )
                 Column(
                     modifier = Modifier
-                        .clip(MaterialTheme.shapes.extraSmall)
+                        .clip(RoundedCornerShape(4.dp))
                         .clickable(onClick = { showInfoDlg = true })
                         .padding(horizontal = 4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text(text = META.appName, style = MaterialTheme.typography.titleMedium)
+                    Text(text = META.appName, style = MiuixTheme.textStyles.title3)
                     Text(
                         text = META.versionName,
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MiuixTheme.textStyles.body2,
                     )
                 }
                 Spacer(modifier = Modifier.height(32.dp))
@@ -230,8 +231,8 @@ fun AboutPage() {
             Text(
                 text = "反馈",
                 modifier = Modifier.titleItemPadding(),
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary,
+                style = MiuixTheme.textStyles.subtitle,
+                color = MiuixTheme.colorScheme.primary,
             )
             Column(
                 modifier = Modifier
@@ -242,7 +243,7 @@ fun AboutPage() {
                                 Text(text = buildAnnotatedString {
                                     val highlightStyle = SpanStyle(
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.primary,
+                                        color = MiuixTheme.colorScheme.primary,
                                     )
                                     append("感谢您愿意花时间反馈，")
                                     withStyle(style = highlightStyle) {
@@ -266,7 +267,7 @@ fun AboutPage() {
             ) {
                 Text(
                     text = "问题反馈",
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = MiuixTheme.textStyles.body1,
                 )
             }
             SettingItem(
@@ -280,8 +281,8 @@ fun AboutPage() {
                 Text(
                     text = "更新",
                     modifier = Modifier.titleItemPadding(),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
+                    style = MiuixTheme.textStyles.subtitle,
+                    color = MiuixTheme.colorScheme.primary,
                 )
                 TextMenu(
                     title = "更新渠道",
@@ -314,7 +315,7 @@ fun AboutPage() {
                 ) {
                     Text(
                         text = "检查更新",
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MiuixTheme.textStyles.body1,
                     )
                     RotatingLoadingIcon(loading = mainVm.updateStatus.checkUpdatingFlow.collectAsState().value)
                 }
@@ -365,7 +366,7 @@ private fun exportPlayTipTemplate(): AnnotatedString {
                 TextLinkStyles(
                     style = SpanStyle(
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = MiuixTheme.colorScheme.primary,
                     )
                 )
             )

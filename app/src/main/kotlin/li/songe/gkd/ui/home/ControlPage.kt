@@ -253,7 +253,7 @@ fun useControlPage(): ScaffoldExt {
                 }
 
                 SettingItem(
-                    title = "了解 GKD-X",
+                    title = "了解 GKD",
                     subtitle = "查阅规则文档和常见问题",
                     onClickLabel = "打开规则文档页面",
                     onClick = {

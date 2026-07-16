@@ -1,6 +1,7 @@
 package li.songe.gkd.service
 
 
+import androidx.compose.foundation.shape.RoundedCornerShape
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.res.Configuration
@@ -12,7 +13,6 @@ import android.view.WindowManager
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.MaterialTheme
 import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -149,7 +149,7 @@ abstract class OverlayWindowService(
             PerfIcon(
                 imageVector = PerfIcon.Close,
                 modifier = Modifier
-                    .clip(MaterialTheme.shapes.extraSmall)
+                    .clip(RoundedCornerShape(4.dp))
                     .clickable(onClick = throttle {
                         stopSelf()
                     })

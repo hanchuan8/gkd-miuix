@@ -1,5 +1,6 @@
 package li.songe.gkd.ui
 
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -15,7 +16,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
 import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -81,7 +81,7 @@ fun AppOpsAllowPage() {
                 ) {
                     Text(
                         text = "下列权限应默认授予，但可能因某些操作如系统升级，备份迁移等被限制",
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MiuixTheme.textStyles.body2,
                     )
                     Spacer(modifier = Modifier.height(24.dp))
                     Column(
@@ -146,12 +146,12 @@ private fun RestrictItem(state: PermissionState) {
                 modifier = Modifier
                     .padding(vertical = (lineHeightDp - size) / 2)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.tertiary)
+                    .background(MiuixTheme.colorScheme.secondary)
                     .size(size)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                style = MaterialTheme.typography.titleMedium,
+                style = MiuixTheme.textStyles.title3,
                 text = state.name,
             )
         }

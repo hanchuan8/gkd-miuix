@@ -1,5 +1,7 @@
 package li.songe.gkd.ui
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,7 +16,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import li.songe.gkd.ui.component.PerfDropdownMenu
 import li.songe.gkd.ui.component.PerfDropdownMenuItem
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -157,7 +158,7 @@ fun SubsCategoryGroupPage(route: SubsCategoryGroupRoute) {
                         PerfDropdownMenuItem(
                             startAction = { PerfIcon(imageVector = PerfIcon.Delete) },
                             text = "删除",
-                            titleColor = MaterialTheme.colorScheme.error,
+                            titleColor = MiuixTheme.colorScheme.error,
                             onClick = throttle(mainVm.viewModelScope.launchAsFn {
                                 expanded = false
                                 mainVm.dialogFlow.waitResult(
@@ -239,9 +240,9 @@ fun SubsCategoryGroupPage(route: SubsCategoryGroupRoute) {
                 stickyHeader(app.id) {
                     Row(
                         modifier = Modifier
-                            .background(MaterialTheme.colorScheme.background)
+                            .background(MiuixTheme.colorScheme.surface)
                             .padding(horizontal = 8.dp)
-                            .clip(MaterialTheme.shapes.extraSmall)
+                            .clip(RoundedCornerShape(4.dp))
                             .clickable(onClick = throttle {
                                 mainVm.navigatePage(
                                     SubsAppGroupListRoute(
@@ -259,12 +260,12 @@ fun SubsCategoryGroupPage(route: SubsCategoryGroupRoute) {
                             modifier = Modifier.weight(1f),
                             appId = app.id,
                             fallbackName = app.name,
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.primary,
+                            style = MiuixTheme.textStyles.subtitle,
+                            color = MiuixTheme.colorScheme.primary,
                         )
                         PerfIcon(
                             imageVector = PerfIcon.KeyboardArrowRight,
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = MiuixTheme.colorScheme.primary,
                             modifier = Modifier.iconTextSize(),
                         )
                     }

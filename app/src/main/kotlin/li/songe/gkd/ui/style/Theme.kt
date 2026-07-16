@@ -6,6 +6,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -92,10 +93,14 @@ fun AppTheme(
                 .toMaterialColorScheme(darkTheme)
                 .animation()
             ApplyWindowChrome(darkTheme = darkTheme, background = materialScheme.background)
-            MaterialTheme(
-                colorScheme = materialScheme,
-                content = content,
-            )
+            CompositionLocalProvider(
+                LocalContentColor provides MiuixTheme.colorScheme.onSurface,
+            ) {
+                MaterialTheme(
+                    colorScheme = materialScheme,
+                    content = content,
+                )
+            }
         }
     }
 }
@@ -143,6 +148,8 @@ fun MiuixColors.toMaterialColorScheme(darkTheme: Boolean): ColorScheme {
         surfaceContainer = surfaceContainer,
         surfaceContainerHigh = surfaceContainerHigh,
         surfaceContainerHighest = surfaceContainerHighest,
+        tertiary = secondary,
+        onTertiary = onSecondary,
     )
 }
 

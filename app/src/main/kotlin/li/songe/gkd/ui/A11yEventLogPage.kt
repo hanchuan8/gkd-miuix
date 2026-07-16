@@ -1,5 +1,7 @@
 package li.songe.gkd.ui
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,7 +19,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.selection.SelectionContainer
 import li.songe.gkd.ui.component.PerfAlertDialog
-import androidx.compose.material3.MaterialTheme
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
 import androidx.compose.runtime.Composable
@@ -163,8 +164,8 @@ fun A11yEventLogPage() {
             text = {
                 val textModifier = Modifier
                     .background(
-                        color = MaterialTheme.colorScheme.tertiaryContainer,
-                        shape = MaterialTheme.shapes.extraSmall,
+                        color = MiuixTheme.colorScheme.secondaryContainer,
+                        shape = RoundedCornerShape(4.dp),
                     )
                     .padding(horizontal = 4.dp)
                 Column {
@@ -254,7 +255,7 @@ fun EventLogCard(eventLog: A11yEventLog, modifier: Modifier = Modifier) {
     ) {
         Spacer(
             modifier = Modifier
-                .background(MaterialTheme.colorScheme.secondary)
+                .background(MiuixTheme.colorScheme.secondary)
                 .width(2.dp)
                 .height((parentHeight / LocalDensity.current.density).dp)
         )
@@ -272,7 +273,7 @@ fun EventLogCard(eventLog: A11yEventLog, modifier: Modifier = Modifier) {
                 Spacer(
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
-                        .background(MaterialTheme.colorScheme.tertiary)
+                        .background(MiuixTheme.colorScheme.secondary)
                         .size(height = 8.dp, width = 1.dp)
                 )
                 AppNameText(
@@ -281,7 +282,7 @@ fun EventLogCard(eventLog: A11yEventLog, modifier: Modifier = Modifier) {
             }
             Text(
                 text = eventLog.fixedName,
-                color = if (eventLog.isStateChanged) MaterialTheme.colorScheme.primary else Color.Unspecified,
+                color = if (eventLog.isStateChanged) MiuixTheme.colorScheme.primary else Color.Unspecified,
                 maxLines = 1,
                 softWrap = false,
                 overflow = TextOverflow.MiddleEllipsis,
@@ -301,8 +302,8 @@ fun EventLogCard(eventLog: A11yEventLog, modifier: Modifier = Modifier) {
                         text = eventLog.desc,
                         modifier = Modifier
                             .background(
-                                color = MaterialTheme.colorScheme.secondaryContainer,
-                                shape = MaterialTheme.shapes.extraSmall,
+                                color = MiuixTheme.colorScheme.secondaryContainer,
+                                shape = RoundedCornerShape(4.dp),
                             )
                             .padding(horizontal = 2.dp),
                     )
@@ -330,8 +331,8 @@ fun EventLogCard(eventLog: A11yEventLog, modifier: Modifier = Modifier) {
                                 text = subText,
                                 modifier = Modifier
                                     .background(
-                                        color = MaterialTheme.colorScheme.tertiaryContainer,
-                                        shape = MaterialTheme.shapes.extraSmall,
+                                        color = MiuixTheme.colorScheme.secondaryContainer,
+                                        shape = RoundedCornerShape(4.dp),
                                     )
                                     .padding(horizontal = 2.dp),
                             )
@@ -348,7 +349,7 @@ private fun CopyIcon(modifier: Modifier = Modifier, onClick: () -> Unit) {
     PerfIcon(
         imageVector = PerfIcon.ContentCopy,
         modifier = modifier
-            .clip(MaterialTheme.shapes.extraSmall)
+            .clip(RoundedCornerShape(4.dp))
             .clickable(onClick = onClick)
             .iconTextSize(),
     )

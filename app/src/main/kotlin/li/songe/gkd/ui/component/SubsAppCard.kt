@@ -1,5 +1,6 @@
 package li.songe.gkd.ui.component
 
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -7,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
 import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -53,8 +53,8 @@ fun SubsAppCard(
                     softWrap = false,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.fillMaxWidth(),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MiuixTheme.textStyles.body2,
+                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
                 )
             }
         }
@@ -64,7 +64,7 @@ fun SubsAppCard(
                     .padding(2.dp)
                     .size(20.dp),
                 imageVector = PerfIcon.Block,
-                tint = MaterialTheme.colorScheme.secondary,
+                tint = MiuixTheme.colorScheme.secondary,
             )
         }
         PerfSwitch(

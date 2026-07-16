@@ -1,8 +1,9 @@
 package li.songe.gkd.service
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,10 +34,10 @@ class ButtonService : OverlayWindowService(
         PerfIcon(
             imageVector = PerfIcon.CenterFocusWeak,
             modifier = Modifier
-                .clip(MaterialTheme.shapes.small)
-                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = alpha))
+                .clip(RoundedCornerShape(8.dp))
+                .background(MiuixTheme.colorScheme.primaryContainer.copy(alpha = alpha))
                 .size(40.dp),
-            tint = MaterialTheme.colorScheme.primary.copy(alpha = alpha),
+            tint = MiuixTheme.colorScheme.primary.copy(alpha = alpha),
         )
     }
 

@@ -1,5 +1,6 @@
 package li.songe.gkd.ui
 
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
@@ -13,7 +14,6 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import li.songe.gkd.ui.component.PerfDropdownMenu
-import androidx.compose.material3.MaterialTheme
 import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -257,7 +257,7 @@ fun BlockA11yAppListPage() {
                     text = "已设置为跟随应用白名单",
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
-                    color = MaterialTheme.colorScheme.tertiary,
+                    color = MiuixTheme.colorScheme.secondary,
                 )
             }
         } else if (editable) {

@@ -1,5 +1,7 @@
 package li.songe.gkd.ui
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,7 +20,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
 import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -72,7 +73,7 @@ fun ActivityLogPage() {
     val logCount by vm.logCountFlow.collectAsState()
     val list = vm.pagingDataFlow.collectAsLazyPagingItems()
     val listState = useListScrollState(list.itemCount > 0)
-    val timeTextWidth = measureNumberTextWidth(MaterialTheme.typography.bodySmall)
+    val timeTextWidth = measureNumberTextWidth(MiuixTheme.textStyles.footnote1)
 
     AppPageScaffold(
         title = "界面日志",
@@ -147,7 +148,7 @@ private fun ActivityLogCard(
             Row(
                 modifier = Modifier
                     .padding(start = itemHorizontalPadding / 4)
-                    .clip(MaterialTheme.shapes.extraSmall)
+                    .clip(RoundedCornerShape(4.dp))
                     .clickable(onClick = throttle {
                         mainVm.navigatePage(
                             AppConfigRoute(
@@ -160,11 +161,11 @@ private fun ActivityLogCard(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.primary) {
+                CompositionLocalProvider(LocalContentColor provides MiuixTheme.colorScheme.primary) {
                     Spacer(
                         modifier = Modifier
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.secondary)
+                            .background(MiuixTheme.colorScheme.secondary)
                             .size(4.dp)
                     )
                     AppNameText(appId = activityLog.appId, modifier = Modifier.weight(1f))
@@ -195,7 +196,7 @@ private fun ActivityLogCard(
                 modifier = Modifier
                     .fillMaxHeight()
                     .width(2.dp)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
+                    .background(MiuixTheme.colorScheme.primaryContainer),
             )
             Spacer(modifier = Modifier.width(8.dp))
             Column(
@@ -203,10 +204,10 @@ private fun ActivityLogCard(
             ) {
                 FixedTimeText(
                     text = activityLog.date,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.secondary,
+                    style = MiuixTheme.textStyles.footnote1,
+                    color = MiuixTheme.colorScheme.secondary,
                 )
-                CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.bodyMedium) {
+                CompositionLocalProvider(LocalTextStyle provides MiuixTheme.textStyles.body2) {
                     if (showActivityId != null) {
                         Text(
                             text = showActivityId,

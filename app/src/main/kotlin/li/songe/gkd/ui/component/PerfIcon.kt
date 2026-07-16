@@ -1,8 +1,6 @@
 package li.songe.gkd.ui.component
 
 import androidx.annotation.DrawableRes
-import androidx.compose.material3.IconButtonColors
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -16,6 +14,7 @@ import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
 import li.songe.gkd.ui.icon.Rocket
 import top.yukonga.miuix.kmp.icon.MiuixIcons
 import top.yukonga.miuix.kmp.icon.extended.Pin
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.icon.extended.Add
 import top.yukonga.miuix.kmp.icon.extended.Back
 import top.yukonga.miuix.kmp.icon.extended.Blocklist
@@ -55,11 +54,18 @@ import top.yukonga.miuix.kmp.icon.extended.Theme
 import top.yukonga.miuix.kmp.icon.extended.Tune
 import top.yukonga.miuix.kmp.icon.extended.Update
 
+/** 跟随明暗主题的默认图标色：优先 LocalContentColor，否则 MIUIX onSurface */
+@Composable
+fun defaultIconTint(): Color {
+    val local = LocalContentColor.current
+    return if (local == Color.Unspecified) MiuixTheme.colorScheme.onSurface else local
+}
+
 @Composable
 fun PerfIcon(
     imageVector: ImageVector,
     modifier: Modifier = Modifier,
-    tint: Color = LocalContentColor.current,
+    tint: Color = defaultIconTint(),
     contentDescription: String? = getIconDefaultDesc(imageVector),
 ) {
     MiuixIcon(
@@ -76,7 +82,7 @@ fun PerfIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    colors: IconButtonColors = IconButtonDefaults.iconButtonColors(),
+    tint: Color = defaultIconTint(),
     contentDescription: String? = getIconDefaultDesc(imageVector),
     onClickLabel: String? = null,
 ) = TooltipIconButtonBox(
@@ -95,7 +101,7 @@ fun PerfIconButton(
         PerfIcon(
             imageVector = imageVector,
             contentDescription = contentDescription,
-            tint = colors.contentColor,
+            tint = if (enabled) tint else tint.copy(alpha = 0.38f),
         )
     }
 }
@@ -104,7 +110,7 @@ fun PerfIconButton(
 fun PerfIcon(
     @DrawableRes id: Int,
     modifier: Modifier = Modifier,
-    tint: Color = LocalContentColor.current,
+    tint: Color = defaultIconTint(),
     contentDescription: String? = null,
 ) = MiuixIcon(
     painter = painterResource(id),
@@ -119,7 +125,7 @@ fun PerfIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    colors: IconButtonColors = IconButtonDefaults.iconButtonColors(),
+    tint: Color = defaultIconTint(),
     contentDescription: String? = null,
     onClickLabel: String? = null,
 ) = TooltipIconButtonBox(
@@ -137,7 +143,7 @@ fun PerfIconButton(
         PerfIcon(
             id = id,
             contentDescription = contentDescription,
-            tint = colors.contentColor,
+            tint = if (enabled) tint else tint.copy(alpha = 0.38f),
         )
     }
 }

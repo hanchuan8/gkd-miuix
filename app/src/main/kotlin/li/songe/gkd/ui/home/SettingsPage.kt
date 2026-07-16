@@ -1,5 +1,6 @@
 package li.songe.gkd.ui.home
 
+import androidx.compose.foundation.shape.RoundedCornerShape
 import android.view.KeyEvent
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
@@ -21,7 +22,6 @@ import androidx.compose.foundation.verticalScroll
 import li.songe.gkd.ui.component.PerfAlertDialog
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
 import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -446,7 +446,7 @@ fun useSettingsPage(): ScaffoldExt {
                             onClick = { vm.showToastSettingsDlgFlow.update { !it } },
                             id = R.drawable.ic_page_info,
                             contentDescription = "提示设置",
-                            tint = if (showToastSettingsDlg) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+                            tint = if (showToastSettingsDlg) MiuixTheme.colorScheme.primary else LocalContentColor.current,
                         )
                     },
                     onCheckedChange = {
@@ -618,7 +618,7 @@ fun useSettingsPage(): ScaffoldExt {
             }
 
             PreferenceGroup(title = "外观") {
-                SettingItem(title = "设计", subtitle = "主题 / 模糊 / 悬浮底栏", onClick = {
+                SettingItem(title = "设计", subtitle = "主题 / 模糊 / 液态玻璃 / 预测式返回", onClick = {
                     mainVm.navigatePage(DesignRoute)
                 })
 
@@ -708,10 +708,10 @@ private fun BlockA11yDialog(onDismissRequest: () -> Unit) = FullscreenDialog(onD
                 .padding(contentPadding)
                 .padding(horizontal = itemHorizontalPadding)
         ) {
-            CompositionLocalProvider(LocalTextStyle provides MaterialTheme.typography.bodyMedium) {
+            CompositionLocalProvider(LocalTextStyle provides MiuixTheme.textStyles.body2) {
                 Text(text = "「局部关闭」可在白名单应用内关闭服务，来解决界面异常，游戏掉帧或无障碍检测的问题")
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(text = "使用须知", style = MaterialTheme.typography.titleMedium)
+                Text(text = "使用须知", style = MiuixTheme.textStyles.title3)
                 Column(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
@@ -720,7 +720,7 @@ private fun BlockA11yDialog(onDismissRequest: () -> Unit) = FullscreenDialog(onD
                     RequiredTextItem(text = "必须确保服务关闭后的持续后台运行，否则会被系统暂停或结束运行导致重启失败")
                 }
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(text = "使用条件", style = MaterialTheme.typography.titleMedium)
+                Text(text = "使用条件", style = MiuixTheme.textStyles.title3)
                 Column(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
@@ -791,7 +791,7 @@ private fun RequiredTextItem(
 ) {
     Row(
         modifier = Modifier
-            .clip(MaterialTheme.shapes.extraSmall)
+            .clip(RoundedCornerShape(4.dp))
             .run {
                 if (onClick != null) {
                     clickable(
@@ -810,7 +810,7 @@ private fun RequiredTextItem(
             modifier = Modifier
                 .padding(vertical = (lineHeightDp - 4.dp) / 2)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.tertiary)
+                .background(MiuixTheme.colorScheme.secondary)
                 .size(4.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))

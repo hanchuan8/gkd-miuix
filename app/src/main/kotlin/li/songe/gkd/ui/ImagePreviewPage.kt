@@ -1,5 +1,6 @@
 package li.songe.gkd.ui
 
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import android.webkit.URLUtil
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
@@ -22,8 +23,6 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -242,7 +241,7 @@ fun ImagePreviewPage(route: ImagePreviewRoute) {
                         PerfIconButton(
                             imageVector = PerfIcon.ArrowBack,
                             onClick = { mainVm.popPage() },
-                            colors = IconButtonDefaults.iconButtonColors(contentColor = Color.White)
+                            tint = Color.White,
                         )
                     },
                     titleText = run {
@@ -264,7 +263,7 @@ fun ImagePreviewPage(route: ImagePreviewRoute) {
                             PerfIconButton(
                                 imageVector = PerfIcon.OpenInNew,
                                 onClick = throttle(fn = { mainVm.openUrl(currentUri) }),
-                                colors = IconButtonDefaults.iconButtonColors(contentColor = Color.White)
+                                tint = Color.White,
                             )
                         }
                     },
@@ -283,7 +282,7 @@ fun ImagePreviewPage(route: ImagePreviewRoute) {
                                 .background(Color.Black.copy(alpha = 0.5f), CircleShape)
                                 .padding(horizontal = 12.dp, vertical = 4.dp),
                             color = Color.White,
-                            style = MaterialTheme.typography.bodyMedium.copy(
+                            style = MiuixTheme.textStyles.body2.copy(
                                 fontWeight = FontWeight.Bold
                             )
                         )
@@ -373,8 +372,8 @@ private fun UriImage(
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             text = text,
-                            color = MaterialTheme.colorScheme.outline,
-                            style = MaterialTheme.typography.bodySmall,
+                            color = MiuixTheme.colorScheme.outline,
+                            style = MiuixTheme.textStyles.footnote1,
                         )
                     }
                 }
@@ -404,15 +403,15 @@ private fun UriImage(
                             detectTapGestures(onTap = { reload() })
                         },
                         text = "加载失败, 点击重试",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyMedium
+                        color = MiuixTheme.colorScheme.error,
+                        style = MiuixTheme.textStyles.body2
                     )
                     stateVal.result.throwable.message?.let { msg ->
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = msg,
-                            color = MaterialTheme.colorScheme.outline,
-                            style = MaterialTheme.typography.labelSmall,
+                            color = MiuixTheme.colorScheme.outline,
+                            style = MiuixTheme.textStyles.footnote2,
                             modifier = Modifier.padding(horizontal = 16.dp),
                             textAlign = TextAlign.Center
                         )

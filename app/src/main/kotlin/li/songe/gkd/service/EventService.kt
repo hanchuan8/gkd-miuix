@@ -1,5 +1,7 @@
 package li.songe.gkd.service
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import android.view.accessibility.AccessibilityEvent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -17,7 +19,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
 import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
@@ -69,7 +70,7 @@ class EventService : OverlayWindowService(positionKey = "event") {
 
     @Composable
     override fun ComposeContent() {
-        val bgColor = MaterialTheme.colorScheme.surface
+        val bgColor = MiuixTheme.colorScheme.surface
         CompositionLocalProvider(
             LocalContentColor provides contentColorFor(bgColor),
         ) {
@@ -88,7 +89,7 @@ class EventService : OverlayWindowService(positionKey = "event") {
             }
             Column(
                 modifier = Modifier
-                    .clip(MaterialTheme.shapes.small)
+                    .clip(RoundedCornerShape(8.dp))
                     .background(bgColor.copy(alpha = 0.9f))
                     .width(256.dp)
                     .padding(4.dp)
@@ -96,7 +97,7 @@ class EventService : OverlayWindowService(positionKey = "event") {
                 ClosableTitle(
                     title = if (A11yService.isRunning.collectAsState().value || uiAutomationFlow.collectAsState().value != null) "事件服务" else "事件服务(无权限)"
                 )
-                val textStyle = MaterialTheme.typography.labelSmall
+                val textStyle = MiuixTheme.textStyles.footnote2
                 val numCharWidth = measureNumberTextWidth(textStyle)
                 CompositionLocalProvider(
                     LocalTextStyle provides textStyle,

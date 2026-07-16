@@ -1,7 +1,7 @@
 {
   "versionCode": 92,
   "versionName": "1.12.1",
-  "changelog": "GKD-X MIUIX 界面适配\n\n- 全量 MIUIX UI\n- 首页 / 订阅 / 触发记录等页面优化\n- 触发提示支持实时通知\n开源致谢见仓库 README（含 compose-miuix-ui 等）",
+  "changelog": "GKD MIUIX 首版 v1.0.0\n\n- 全量 MIUIX 界面（顶栏模糊、悬浮底栏、液态玻璃）\n- 预测式返回、动态取色默认关闭\n- 订阅添加/刷新加载进度提示\n- 包名与应用名与原版 GKD 一致（li.songe.gkd）",
   "downloadUrl": "https://github.com/hanchuan8/gkd-miuix/releases/latest",
   "fileSize": 1,
   "versionLogs": []

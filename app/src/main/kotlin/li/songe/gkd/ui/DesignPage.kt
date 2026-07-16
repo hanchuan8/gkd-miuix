@@ -1,6 +1,6 @@
 package li.songe.gkd.ui
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,7 +23,9 @@ import li.songe.gkd.ui.component.PreferenceGroup
 import li.songe.gkd.ui.component.TextMenu
 import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.ui.style.EmptyHeight
+import li.songe.gkd.util.AndroidTarget
 import li.songe.gkd.util.DarkThemeOption
+import li.songe.gkd.util.applyPredictiveBackEnabled
 import li.songe.gkd.util.findOption
 import top.yukonga.miuix.kmp.blur.isRuntimeShaderSupported
 import top.yukonga.miuix.kmp.preference.SwitchPreference
@@ -34,6 +36,7 @@ data object DesignRoute : NavKey
 @Composable
 fun DesignPage() {
     val mainVm = LocalMainViewModel.current
+    val activity = LocalActivity.current
     val store by storeFlow.collectAsState()
     val scrollState = rememberScrollState()
     val shaderOk = isRuntimeShaderSupported()
@@ -82,14 +85,24 @@ fun DesignPage() {
                         storeFlow.update { s -> s.copy(useFloatingNavBar = it) }
                     },
                 )
-                AnimatedVisibility(visible = store.useFloatingNavBar) {
+                SwitchPreference(
+                    title = "液态玻璃",
+                    summary = "悬浮底栏与右下角加号按钮使用液态玻璃效果",
+                    checked = store.enableLiquidGlass && store.enableMiuixBlur && shaderOk,
+                    enabled = store.enableMiuixBlur && shaderOk,
+                    onCheckedChange = {
+                        storeFlow.update { s -> s.copy(enableLiquidGlass = it) }
+                    },
+                )
+                if (AndroidTarget.TIRAMISU) {
                     SwitchPreference(
-                        title = "液态玻璃",
-                        summary = "启用 iOS 风格悬浮底栏液态玻璃效果",
-                        checked = store.enableLiquidGlass && store.enableMiuixBlur && shaderOk,
-                        enabled = store.enableMiuixBlur && shaderOk,
-                        onCheckedChange = {
-                            storeFlow.update { s -> s.copy(enableLiquidGlass = it) }
+                        title = "预测式返回",
+                        summary = "侧滑返回时预览上一页，切换后立即重建页面生效",
+                        checked = store.enablePredictiveBack,
+                        onCheckedChange = { enabled ->
+                            storeFlow.update { s -> s.copy(enablePredictiveBack = enabled) }
+                            activity?.applyPredictiveBackEnabled(enabled)
+                            activity?.recreate()
                         },
                     )
                 }

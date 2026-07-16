@@ -31,13 +31,15 @@ data class SettingsStore(
     val autoClearMemorySubs: Boolean = false,
     val hideSnapshotStatusBar: Boolean = false,
     val enableDarkTheme: Boolean? = null,
-    val enableDynamicColor: Boolean = true,
+    val enableDynamicColor: Boolean = false,
     /** MIUIX：顶栏/底栏模糊（需 RuntimeShader） */
     val enableMiuixBlur: Boolean = true,
     /** MIUIX：悬浮底栏（类 Apple / FloatingNavigationBar） */
     val useFloatingNavBar: Boolean = true,
     /** MIUIX：悬浮底栏液态玻璃高光（依赖模糊） */
     val enableLiquidGlass: Boolean = true,
+    /** 系统预测式返回手势（Android 13+，切换后需重建 Activity） */
+    val enablePredictiveBack: Boolean = false,
     val showSaveSnapshotToast: Boolean = true,
     /** @deprecated 由 [actionTipStyle] 接管；读取时见 resolve */
     val useSystemToast: Boolean = false,

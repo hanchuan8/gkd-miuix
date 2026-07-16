@@ -62,7 +62,7 @@ plugins {
 android {
     namespace = "li.songe.gkd"
     defaultConfig {
-        applicationId = "li.songe.gkdx"
+        applicationId = "li.songe.gkd"
         versionCode = 92
         versionName = "1.12.1"
 
@@ -126,7 +126,6 @@ android {
         }
         debug {
             signingConfig = gkdSigningConfig
-            applicationIdSuffix = ".debug"
             resValue("color", "better_black", "#FF5D92")
         }
     }
@@ -207,9 +206,9 @@ dependencies {
     implementation(libs.compose.activity)
     implementation(libs.compose.material3)
 
-    implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+    implementation(libs.miuix.navigation3.ui)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

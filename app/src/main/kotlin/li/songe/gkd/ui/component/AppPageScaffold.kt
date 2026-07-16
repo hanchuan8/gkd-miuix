@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import li.songe.gkd.store.storeFlow
+import li.songe.gkd.ui.share.LocalLayerBackdrop
 import li.songe.gkd.ui.share.LocalMiuixBlurActive
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.TopAppBar as MiuixTopAppBar
@@ -47,46 +48,48 @@ fun AppPageScaffold(
         drawContent()
     }
 
-    MiuixScaffold(
-        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            CompositionLocalProvider(LocalMiuixBlurActive provides blurActive) {
-                Box(
-                    modifier = if (blurActive) {
-                        Modifier.textureBlur(
-                            backdrop = backdrop,
-                            shape = RectangleShape,
-                            blurRadius = 25f,
-                            colors = BlurColors(
-                                blendColors = listOf(
-                                    BlendColorEntry(color = surfaceColor.copy(alpha = 0.87f)),
+    CompositionLocalProvider(LocalLayerBackdrop provides backdrop) {
+        MiuixScaffold(
+            modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+            topBar = {
+                CompositionLocalProvider(LocalMiuixBlurActive provides blurActive) {
+                    Box(
+                        modifier = if (blurActive) {
+                            Modifier.textureBlur(
+                                backdrop = backdrop,
+                                shape = RectangleShape,
+                                blurRadius = 25f,
+                                colors = BlurColors(
+                                    blendColors = listOf(
+                                        BlendColorEntry(color = surfaceColor.copy(alpha = 0.87f)),
+                                    ),
                                 ),
-                            ),
+                            )
+                        } else {
+                            Modifier
+                        },
+                    ) {
+                        MiuixTopAppBar(
+                            title = title,
+                            color = barColor,
+                            navigationIcon = navigationIcon,
+                            actions = actions,
+                            scrollBehavior = scrollBehavior,
+                            defaultWindowInsetsPadding = true,
                         )
-                    } else {
-                        Modifier
-                    },
-                ) {
-                    MiuixTopAppBar(
-                        title = title,
-                        color = barColor,
-                        navigationIcon = navigationIcon,
-                        actions = actions,
-                        scrollBehavior = scrollBehavior,
-                        defaultWindowInsetsPadding = true,
-                    )
+                    }
                 }
-            }
-        },
-        floatingActionButton = floatingActionButton,
-        content = { padding ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .layerBackdrop(backdrop),
-            ) {
-                content(padding)
-            }
-        },
-    )
+            },
+            floatingActionButton = floatingActionButton,
+            content = { padding ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .layerBackdrop(backdrop),
+                ) {
+                    content(padding)
+                }
+            },
+        )
+    }
 }

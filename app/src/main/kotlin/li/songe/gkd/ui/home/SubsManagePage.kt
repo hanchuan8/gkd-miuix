@@ -1,5 +1,6 @@
 package li.songe.gkd.ui.home
 
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -14,15 +15,11 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.CheckboxDefaults
 import li.songe.gkd.ui.component.PerfDropdownMenu
 import li.songe.gkd.ui.component.PerfDropdownMenuItem
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
+import li.songe.gkd.ui.component.defaultIconTint
 import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -259,13 +256,11 @@ fun useSubsManagePage(): ScaffoldExt {
                             }.collectAsState()
                             PerfIconButton(
                                 id = if (enableMatch) R.drawable.ic_flash_on else R.drawable.ic_flash_off,
-                                colors = IconButtonDefaults.iconButtonColors(
-                                    contentColor = if (!enableMatch) {
-                                        CheckboxDefaults.colors().checkedBoxColor
-                                    } else {
-                                        LocalContentColor.current
-                                    }
-                                ),
+                                tint = if (!enableMatch) {
+                                    MiuixTheme.colorScheme.primary
+                                } else {
+                                    defaultIconTint()
+                                },
                                 contentDescription = "规则匹配" + if (enableMatch) "已启用" else "已禁用",
                                 onClickLabel = "切换开关",
                                 onClick = throttle { switchStoreEnableMatch() },
@@ -438,7 +433,7 @@ fun useSubsManagePage(): ScaffoldExt {
                                                         )
                                                     }),
                                                     textDecoration = TextDecoration.Underline,
-                                                    color = MaterialTheme.colorScheme.primary,
+                                                    color = MiuixTheme.colorScheme.primary,
                                                 )
                                             }
                                         },

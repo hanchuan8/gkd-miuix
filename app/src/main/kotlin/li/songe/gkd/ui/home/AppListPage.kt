@@ -1,21 +1,7 @@
 package li.songe.gkd.ui.home
 
-import androidx.activity.compose.BackHandler
-import androidx.activity.compose.LocalActivity
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -61,6 +47,7 @@ import li.songe.gkd.ui.component.PerfIconButton
 import li.songe.gkd.ui.component.PerfTopAppBar
 import li.songe.gkd.ui.component.QueryPkgAuthCard
 import li.songe.gkd.ui.component.autoFocus
+import li.songe.gkd.ui.component.defaultIconTint
 import li.songe.gkd.ui.component.updateDialogOptions
 import li.songe.gkd.ui.component.useListScrollState
 import li.songe.gkd.ui.share.ListPlaceholder
@@ -80,6 +67,18 @@ import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.PullToRefresh
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import androidx.compose.material3.LocalContentColor
+import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 
 @Composable
 fun useAppListPage(): ScaffoldExt {
@@ -181,13 +180,11 @@ fun useAppListPage(): ScaffoldExt {
                     imageVector = PerfIcon.Edit,
                     contentDescription = "切换白名单编辑模式",
                     onClickLabel = if (editWhiteListMode) "退出编辑" else "进入编辑",
-                    colors = IconButtonDefaults.iconButtonColors(
-                        contentColor = if (editWhiteListMode) {
-                            CheckboxDefaults.colors().checkedBoxColor
-                        } else {
-                            LocalContentColor.current
-                        }
-                    ),
+                    tint = if (editWhiteListMode) {
+                        MiuixTheme.colorScheme.primary
+                    } else {
+                        defaultIconTint()
+                    },
                     onClick = throttle {
                         vm.editWhiteListModeFlow.update { !it }
                     },

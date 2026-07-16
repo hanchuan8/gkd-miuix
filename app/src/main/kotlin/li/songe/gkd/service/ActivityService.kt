@@ -1,5 +1,7 @@
 package li.songe.gkd.service
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -10,7 +12,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
 import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
@@ -54,10 +55,10 @@ class ActivityService : OverlayWindowService(
 
     @Composable
     override fun ComposeContent() {
-        val bgColor = MaterialTheme.colorScheme.surface
+        val bgColor = MiuixTheme.colorScheme.surface
         Column(
             modifier = Modifier
-                .clip(MaterialTheme.shapes.small)
+                .clip(RoundedCornerShape(8.dp))
                 .background(bgColor.copy(alpha = 0.9f))
                 .width(IntrinsicSize.Max)
                 .padding(4.dp)
@@ -76,18 +77,18 @@ class ActivityService : OverlayWindowService(
                             RowText(text = topActivity.appId)
                             RowText(
                                 text = topActivity.shortActivityId,
-                                color = MaterialTheme.colorScheme.secondary
+                                color = MiuixTheme.colorScheme.secondary
                             )
                         }
                         if (topActivity.number > 0) {
                             Text(
                                 text = topActivity.number.toString(),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.tertiary,
+                                style = MiuixTheme.textStyles.footnote2,
+                                color = MiuixTheme.colorScheme.secondary,
                                 modifier = Modifier
                                     .align(Alignment.TopEnd)
                                     .zIndex(1f)
-                                    .clip(MaterialTheme.shapes.extraSmall)
+                                    .clip(RoundedCornerShape(4.dp))
                                     .padding(end = 4.dp),
                             )
                         }
@@ -143,7 +144,7 @@ private fun RowText(text: String?, color: Color = Color.Unspecified) {
             PerfIcon(
                 imageVector = PerfIcon.ContentCopy,
                 modifier = Modifier
-                    .clip(MaterialTheme.shapes.extraSmall)
+                    .clip(RoundedCornerShape(4.dp))
                     .clickable(onClick = {
                         copyText(text)
                     })

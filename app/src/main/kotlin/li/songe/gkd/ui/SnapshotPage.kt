@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.MaterialTheme
 import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -86,7 +85,7 @@ fun SnapshotPage() {
         snapshots.isEmpty(),
         firstLoading,
     )
-    val timeTextWidth = measureNumberTextWidth(MaterialTheme.typography.bodySmall)
+    val timeTextWidth = measureNumberTextWidth(MiuixTheme.textStyles.footnote1)
 
     AppPageScaffold(
         title = "快照记录",
@@ -244,7 +243,7 @@ private fun SnapshotCard(
             modifier = Modifier
                 .fillMaxHeight()
                 .width(2.dp)
-                .background(MaterialTheme.colorScheme.primaryContainer),
+                .background(MiuixTheme.colorScheme.primaryContainer),
         )
         Spacer(modifier = Modifier.width(8.dp))
         Column(
@@ -265,7 +264,7 @@ private fun SnapshotCard(
                 )
                 FixedTimeText(
                     text = snapshot.date,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MiuixTheme.textStyles.footnote1,
                 )
             }
             val showActivityId = if (snapshot.activityId != null) {
@@ -279,9 +278,9 @@ private fun SnapshotCard(
             }
             if (showActivityId != null) {
                 Text(
-                    modifier = Modifier.height(MaterialTheme.typography.bodyMedium.lineHeight.value.dp),
+                    modifier = Modifier.height(MiuixTheme.textStyles.body2.lineHeight.value.dp),
                     text = showActivityId,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MiuixTheme.textStyles.body2,
                     softWrap = false,
                     maxLines = 1,
                     overflow = TextOverflow.MiddleEllipsis,
@@ -289,8 +288,8 @@ private fun SnapshotCard(
             } else {
                 Text(
                     text = "null",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.typography.bodyMedium.color.copy(alpha = 0.5f)
+                    style = MiuixTheme.textStyles.body2,
+                    color = MiuixTheme.textStyles.body2.color.copy(alpha = 0.5f)
                 )
             }
         }

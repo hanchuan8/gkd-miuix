@@ -8,9 +8,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -74,6 +71,7 @@ import li.songe.gkd.service.updateTopTaskAppId
 import li.songe.gkd.shizuku.automationRegisteredExceptionFlow
 import li.songe.gkd.shizuku.shizukuContextFlow
 import li.songe.gkd.store.storeFlow
+import li.songe.gkd.util.applyPredictiveBackEnabled
 import li.songe.gkd.ui.A11YScopeAppListRoute
 import li.songe.gkd.ui.A11yEventLogPage
 import li.songe.gkd.ui.A11yEventLogRoute
@@ -126,6 +124,7 @@ import li.songe.gkd.ui.component.BuildDialog
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.ShareLogDlg
 import li.songe.gkd.ui.component.SubsSheet
+import li.songe.gkd.ui.component.SubsUpdateProgressDialog
 import li.songe.gkd.ui.component.TermsAcceptDialog
 import li.songe.gkd.ui.component.TextDialog
 import li.songe.gkd.ui.home.HomePage
@@ -230,6 +229,8 @@ class MainActivity : ComponentActivity() {
         installSplashScreen()
         enableEdgeToEdge()
         fixSomeProblems()
+        // 必须在 super.onCreate 前写入 ApplicationInfo，系统才会按开关启用预测式返回
+        applyPredictiveBackEnabled(storeFlow.value.enablePredictiveBack)
         super.onCreate(savedInstanceState)
         LogUtils.d()
         mainVm
@@ -290,18 +291,6 @@ class MainActivity : ComponentActivity() {
                             entry<CrashReportRoute> { CrashReportPage() }
                             entry<SubsCategoryGroupRoute> { SubsCategoryGroupPage(it) }
                         },
-                        transitionSpec = {
-                            slideInHorizontally(initialOffsetX = { it }) togetherWith
-                                    slideOutHorizontally(targetOffsetX = { -it })
-                        },
-                        popTransitionSpec = {
-                            slideInHorizontally(initialOffsetX = { -it }) togetherWith
-                                    slideOutHorizontally(targetOffsetX = { it })
-                        },
-                        predictivePopTransitionSpec = {
-                            slideInHorizontally(initialOffsetX = { -it }) togetherWith
-                                    slideOutHorizontally(targetOffsetX = { it })
-                        },
                     )
                     if (!mainVm.termsAcceptedFlow.collectAsState().value) {
                         TermsAcceptDialog()
@@ -316,6 +305,7 @@ class MainActivity : ComponentActivity() {
                         mainVm.updateStatus?.UpgradeDialog()
                         SubsSheet(mainVm, mainVm.sheetSubsIdFlow)
                         mainVm.inputSubsLinkOption.ContentDialog()
+                        SubsUpdateProgressDialog()
                         mainVm.ruleGroupState.Render()
                         TextDialog(mainVm.textFlow)
                         ShareLogDlg(mainVm.showShareLogDlgFlow)

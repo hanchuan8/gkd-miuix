@@ -1,5 +1,7 @@
 package li.songe.gkd.ui
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,7 +18,6 @@ import androidx.compose.foundation.lazy.items
 import li.songe.gkd.ui.component.PerfDropdownMenu
 import li.songe.gkd.ui.component.PerfDropdownMenuItem
 import top.yukonga.miuix.kmp.basic.IconButton
-import androidx.compose.material3.MaterialTheme
 import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -273,9 +274,9 @@ fun AppConfigPage(route: AppConfigRoute) {
                 stickyHeader(entry.subsItem.id) {
                     Row(
                         modifier = Modifier
-                            .background(MaterialTheme.colorScheme.background)
+                            .background(MiuixTheme.colorScheme.surface)
                             .padding(horizontal = 8.dp)
-                            .clip(MaterialTheme.shapes.extraSmall)
+                            .clip(RoundedCornerShape(4.dp))
                             .clickable(onClick = throttle {
                                 mainVm.navigatePage(
                                     SubsAppGroupListRoute(
@@ -292,15 +293,15 @@ fun AppConfigPage(route: AppConfigRoute) {
                         Text(
                             modifier = Modifier.weight(1f),
                             text = entry.subscription.name,
-                            style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.primary,
+                            style = MiuixTheme.textStyles.subtitle,
+                            color = MiuixTheme.colorScheme.primary,
                             maxLines = 1,
                             softWrap = false,
                             overflow = TextOverflow.Ellipsis,
                         )
                         PerfIcon(
                             imageVector = PerfIcon.KeyboardArrowRight,
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = MiuixTheme.colorScheme.primary,
                             modifier = Modifier.iconTextSize()
                         )
                     }

@@ -1,7 +1,7 @@
 {
   "versionCode": 92,
   "versionName": "1.12.1",
-  "changelog": "GKD-X MIUIX 界面适配（测试通道）\n\n开源致谢见仓库 README（含 compose-miuix-ui 等）",
+  "changelog": "GKD MIUIX 首版 v1.0.0（测试通道）\n\n详见 stable 通道更新说明",
   "downloadUrl": "https://github.com/hanchuan8/gkd-miuix/releases/latest",
   "fileSize": 1,
   "versionLogs": []

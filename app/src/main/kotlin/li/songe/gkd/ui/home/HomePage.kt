@@ -30,6 +30,7 @@ import kotlinx.serialization.Serializable
 import li.songe.gkd.store.storeFlow
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.liquid.IosLiquidGlassNavigationBar
+import li.songe.gkd.ui.share.LocalLayerBackdrop
 import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.ui.share.LocalMiuixBlurActive
 import top.yukonga.miuix.kmp.basic.FloatingNavigationBar
@@ -151,55 +152,57 @@ private fun MiuixDockedNavScaffold(
         ),
     )
 
-    MiuixScaffold(
-        modifier = page.modifier,
-        topBar = {
-            MiuixBlurredTopBar(
-                backdrop = backdrop,
-                blurActive = blurActive,
-                content = page.topBar,
-            )
-        },
-        floatingActionButton = page.floatingActionButton,
-        bottomBar = {
-            Box(
-                modifier = Modifier
-                    .then(
-                        if (blurActive) {
-                            Modifier.textureBlur(
-                                backdrop = backdrop,
-                                shape = RectangleShape,
-                                blurRadius = 25f,
-                                colors = blurColors,
-                            )
-                        } else {
-                            Modifier
-                        }
-                    )
-                    .background(barColor),
-            ) {
-                MiuixNavigationBar(color = barColor) {
-                    pages.forEach { p ->
-                        MiuixNavigationBarItem(
-                            selected = p.navItem.key == tab,
-                            onClick = { mainVm.handleClickTab(p.navItem) },
-                            icon = p.navItem.icon,
-                            label = p.navItem.label,
+    CompositionLocalProvider(LocalLayerBackdrop provides backdrop) {
+        MiuixScaffold(
+            modifier = page.modifier,
+            topBar = {
+                MiuixBlurredTopBar(
+                    backdrop = backdrop,
+                    blurActive = blurActive,
+                    content = page.topBar,
+                )
+            },
+            floatingActionButton = page.floatingActionButton,
+            bottomBar = {
+                Box(
+                    modifier = Modifier
+                        .then(
+                            if (blurActive) {
+                                Modifier.textureBlur(
+                                    backdrop = backdrop,
+                                    shape = RectangleShape,
+                                    blurRadius = 25f,
+                                    colors = blurColors,
+                                )
+                            } else {
+                                Modifier
+                            }
                         )
+                        .background(barColor),
+                ) {
+                    MiuixNavigationBar(color = barColor) {
+                        pages.forEach { p ->
+                            MiuixNavigationBarItem(
+                                selected = p.navItem.key == tab,
+                                onClick = { mainVm.handleClickTab(p.navItem) },
+                                icon = p.navItem.icon,
+                                label = p.navItem.label,
+                            )
+                        }
                     }
                 }
-            }
-        },
-        content = { padding ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .layerBackdrop(backdrop),
-            ) {
-                page.content(padding)
-            }
-        },
-    )
+            },
+            content = { padding ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .layerBackdrop(backdrop),
+                ) {
+                    page.content(padding)
+                }
+            },
+        )
+    }
 }
 
 /**
@@ -238,87 +241,89 @@ private fun MiuixFloatingNavScaffold(
     val hasFab = tab == BottomNavItem.AppList.key
     val listBottomSpace = if (hasFab) contentBottomSpace + 72.dp else contentBottomSpace
 
-    MiuixScaffold(
-        modifier = page.modifier,
-        topBar = {
-            MiuixBlurredTopBar(
-                backdrop = backdrop,
-                blurActive = blurActive,
-                content = page.topBar,
-            )
-        },
-        // 空 bottomBar 时 FAB 只避开系统导航条，会被悬浮底栏挡住，需额外抬高
-        floatingActionButton = {
-            Box(modifier = Modifier.padding(bottom = floatingBarBody)) {
-                page.floatingActionButton()
-            }
-        },
-        bottomBar = {},
-        content = { padding ->
-            Box(modifier = Modifier.fillMaxSize()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .layerBackdrop(backdrop),
-                ) {
-                    page.content(
-                        PaddingValues(
-                            start = padding.calculateStartPadding(layoutDirection),
-                            top = padding.calculateTopPadding(),
-                            end = padding.calculateEndPadding(layoutDirection),
-                            bottom = listBottomSpace,
-                        )
-                    )
+    CompositionLocalProvider(LocalLayerBackdrop provides backdrop) {
+        MiuixScaffold(
+            modifier = page.modifier,
+            topBar = {
+                MiuixBlurredTopBar(
+                    backdrop = backdrop,
+                    blurActive = blurActive,
+                    content = page.topBar,
+                )
+            },
+            // 空 bottomBar 时 FAB 只避开系统导航条，会被悬浮底栏挡住，需额外抬高
+            floatingActionButton = {
+                Box(modifier = Modifier.padding(bottom = floatingBarBody)) {
+                    page.floatingActionButton()
                 }
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .fillMaxWidth(),
-                ) {
-                    val navItems = remember(pages) {
-                        pages.map { NavigationItem(label = it.navItem.label, icon = it.navItem.icon) }
-                    }
-                    if (liquidGlass) {
-                        // MIUIX Demo「iOS-like」液态玻璃悬浮底栏
-                        IosLiquidGlassNavigationBar(
-                            items = navItems,
-                            selectedIndex = pages.indexOfFirst { it.navItem.key == tab }.coerceAtLeast(0),
-                            onItemClick = { index ->
-                                pages.getOrNull(index)?.let { mainVm.handleClickTab(it.navItem) }
-                            },
-                            backdrop = backdrop,
-                            isBlurActive = glassActive,
+            },
+            bottomBar = {},
+            content = { padding ->
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .layerBackdrop(backdrop),
+                    ) {
+                        page.content(
+                            PaddingValues(
+                                start = padding.calculateStartPadding(layoutDirection),
+                                top = padding.calculateTopPadding(),
+                                end = padding.calculateEndPadding(layoutDirection),
+                                bottom = listBottomSpace,
+                            )
                         )
-                    } else {
-                        FloatingNavigationBar(
-                            modifier = if (glassActive) {
-                                Modifier.textureBlur(
-                                    backdrop = backdrop,
-                                    shape = floatingBarShape,
-                                    blurRadius = 25f,
-                                    colors = blurColors,
-                                    highlight = null,
-                                )
-                            } else {
-                                Modifier
-                            },
-                            color = floatingBarColor,
-                            defaultWindowInsetsPadding = true,
-                        ) {
-                            pages.forEach { p ->
-                                FloatingNavigationBarItem(
-                                    selected = p.navItem.key == tab,
-                                    onClick = { mainVm.handleClickTab(p.navItem) },
-                                    icon = p.navItem.icon,
-                                    label = p.navItem.label,
-                                )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .fillMaxWidth(),
+                    ) {
+                        val navItems = remember(pages) {
+                            pages.map { NavigationItem(label = it.navItem.label, icon = it.navItem.icon) }
+                        }
+                        if (liquidGlass) {
+                            // MIUIX Demo「iOS-like」液态玻璃悬浮底栏
+                            IosLiquidGlassNavigationBar(
+                                items = navItems,
+                                selectedIndex = pages.indexOfFirst { it.navItem.key == tab }.coerceAtLeast(0),
+                                onItemClick = { index ->
+                                    pages.getOrNull(index)?.let { mainVm.handleClickTab(it.navItem) }
+                                },
+                                backdrop = backdrop,
+                                isBlurActive = glassActive,
+                            )
+                        } else {
+                            FloatingNavigationBar(
+                                modifier = if (glassActive) {
+                                    Modifier.textureBlur(
+                                        backdrop = backdrop,
+                                        shape = floatingBarShape,
+                                        blurRadius = 25f,
+                                        colors = blurColors,
+                                        highlight = null,
+                                    )
+                                } else {
+                                    Modifier
+                                },
+                                color = floatingBarColor,
+                                defaultWindowInsetsPadding = true,
+                            ) {
+                                pages.forEach { p ->
+                                    FloatingNavigationBarItem(
+                                        selected = p.navItem.key == tab,
+                                        onClick = { mainVm.handleClickTab(p.navItem) },
+                                        icon = p.navItem.icon,
+                                        label = p.navItem.label,
+                                    )
+                                }
                             }
                         }
                     }
                 }
-            }
-        },
-    )
+            },
+        )
+    }
 }
 
 /**

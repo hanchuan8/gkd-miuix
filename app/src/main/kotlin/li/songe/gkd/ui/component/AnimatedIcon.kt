@@ -4,13 +4,12 @@ import androidx.annotation.DrawableRes
 import androidx.compose.animation.graphics.res.animatedVectorResource
 import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
 import androidx.compose.animation.graphics.vector.AnimatedImageVector
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import li.songe.gkd.R
+import top.yukonga.miuix.kmp.basic.Icon as MiuixIcon
+import top.yukonga.miuix.kmp.basic.IconButton as MiuixIconButton
 
 @Composable
 private fun AnimatedIcon(
@@ -25,7 +24,7 @@ private fun AnimatedIcon(
         animation,
         atEnd,
     )
-    Icon(
+    MiuixIcon(
         modifier = modifier,
         painter = painter,
         contentDescription = contentDescription,
@@ -39,12 +38,12 @@ fun AnimatedIconButton(
     @DrawableRes id: Int,
     modifier: Modifier = Modifier,
     atEnd: Boolean = false,
-    tint: Color = LocalContentColor.current,
+    tint: Color = defaultIconTint(),
     contentDescription: String? = getIconDesc(id, atEnd),
 ) = TooltipIconButtonBox(
     contentDescription = contentDescription,
 ) {
-    IconButton(
+    MiuixIconButton(
         onClick = onClick,
     ) {
         AnimatedIcon(

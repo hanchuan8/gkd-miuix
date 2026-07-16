@@ -1,5 +1,7 @@
 package li.songe.gkd.ui.component
 
+import androidx.compose.foundation.shape.RoundedCornerShape
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -7,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material3.MaterialTheme
 import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -34,11 +35,11 @@ fun CopyTextCard(
             Text(
                 text = text,
                 modifier = Modifier
-                    .clip(MaterialTheme.shapes.extraSmall)
-                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(MiuixTheme.colorScheme.secondaryContainer)
                     .padding(8.dp),
-                color = MaterialTheme.colorScheme.secondary,
-                style = MaterialTheme.typography.bodyLarge,
+                color = MiuixTheme.colorScheme.secondary,
+                style = MiuixTheme.textStyles.body1,
             )
         }
         PerfIcon(
@@ -50,7 +51,7 @@ fun CopyTextCard(
                 .padding(4.dp)
                 .size(24.dp),
             imageVector = PerfIcon.ContentCopy,
-            tint = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.75f),
+            tint = MiuixTheme.colorScheme.secondary.copy(alpha = 0.75f),
         )
     }
 }
