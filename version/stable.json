@@ -3,7 +3,7 @@
   "versionName": "1.1.0",
   "changelog": "v1.1.0\n\n- 应用更名为 GKD-X，安装包名改为 li.songe.gkdx（可与原版 GKD 并存）\n- 触发记录、应用配置（含「最近触发」）改为独立 Activity，缓解进页转场掉帧",
   "downloadUrl": "https://github.com/hanchuan8/gkd-miuix/releases/download/v1.1.0/gkd-x-v1.1.0.apk",
-  "fileSize": 3473883,
+  "fileSize": 3473879,
   "versionLogs": [
     {
       "name": "1.1.0",
