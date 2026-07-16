@@ -1,6 +1,5 @@
 package li.songe.gkd.ui
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -11,17 +10,16 @@ import kotlinx.coroutines.flow.combine
 import li.songe.gkd.data.ActionLog
 import li.songe.gkd.data.SubsConfig
 import li.songe.gkd.db.DbSet
+import li.songe.gkd.ui.share.BaseViewModel
 import li.songe.gkd.util.subsMapFlow
 
-class ActionLogVm(val route: ActionLogRoute) : ViewModel() {
+class ActionLogVm(val route: ActionLogRoute) : BaseViewModel() {
 
-    val pagingDataFlow = Pager(PagingConfig(pageSize = 100)) {
-        if (route.subsId != null) {
-            DbSet.actionLogDao.pagingSubsSource(subsId = route.subsId)
-        } else if (route.appId != null) {
-            DbSet.actionLogDao.pagingAppSource(appId = route.appId)
-        } else {
-            DbSet.actionLogDao.pagingSource()
+    val pagingDataFlow = Pager(PagingConfig(pageSize = 20, initialLoadSize = 12, prefetchDistance = 8)) {
+        when {
+            route.subsId != null -> DbSet.actionLogDao.pagingSubsSource(subsId = route.subsId)
+            route.appId != null -> DbSet.actionLogDao.pagingAppSource(appId = route.appId)
+            else -> DbSet.actionLogDao.pagingSource()
         }
     }
         .flow
@@ -45,6 +43,11 @@ class ActionLogVm(val route: ActionLogRoute) : ViewModel() {
             }
         }
 
-    val showActionLogFlow = MutableStateFlow<ActionLog?>(null)
+    val logCountFlow = when {
+        route.subsId != null -> DbSet.actionLogDao.countSubs(route.subsId)
+        route.appId != null -> DbSet.actionLogDao.countApp(route.appId)
+        else -> DbSet.actionLogDao.count()
+    }.stateInit(0)
 
+    val showActionLogFlow = MutableStateFlow<ActionLog?>(null)
 }

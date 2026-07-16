@@ -32,6 +32,8 @@ import li.songe.gkd.shizuku.updateBinderMutex
 import li.songe.gkd.store.createTextFlow
 import li.songe.gkd.store.storeFlow
 import li.songe.gkd.ui.AdvancedPageRoute
+import li.songe.gkd.ui.ActionLogRoute
+import li.songe.gkd.ui.AppConfigRoute
 import li.songe.gkd.ui.AppOpsAllowRoute
 import li.songe.gkd.ui.CrashReportRoute
 import li.songe.gkd.ui.SnapshotPageRoute
@@ -100,6 +102,15 @@ class MainViewModel : BaseViewModel(), OnSimpleLife by DefaultSimpleLifeImpl() {
     private val backThrottleTimer = ThrottleTimer()
 
     fun popPage(@Loc loc: String = "") = runMainPost {
+        // 独立 Activity 二级页：返回应 finish 而不是 pop NavDisplay
+        if (AppConfigActivity.finishIfShowing()) {
+            LogUtils.d("popPage", "AppConfigActivity.finish", loc = loc)
+            return@runMainPost
+        }
+        if (ActionLogActivity.finishIfShowing()) {
+            LogUtils.d("popPage", "ActionLogActivity.finish", loc = loc)
+            return@runMainPost
+        }
         if (backThrottleTimer.expired() && backStack.size > 1) {
             val old = backStack.last()
             backStack.removeAt(backStack.lastIndex)
@@ -112,6 +123,16 @@ class MainViewModel : BaseViewModel(), OnSimpleLife by DefaultSimpleLifeImpl() {
         replaced: Boolean = false,
         @Loc loc: String = "",
     ) = runMainPost {
+        if (navKey is ActionLogRoute) {
+            ActionLogActivity.start(MainActivity.current ?: app, navKey)
+            LogUtils.d("navigatePage", "ActionLogActivity <- $navKey", loc = loc)
+            return@runMainPost
+        }
+        if (navKey is AppConfigRoute) {
+            AppConfigActivity.start(MainActivity.current ?: app, navKey)
+            LogUtils.d("navigatePage", "AppConfigActivity <- $navKey", loc = loc)
+            return@runMainPost
+        }
         if (navKey != backStack.last()) {
             val old = backStack.last()
             if (replaced) {
@@ -120,6 +141,9 @@ class MainViewModel : BaseViewModel(), OnSimpleLife by DefaultSimpleLifeImpl() {
                 backStack.add(navKey)
             }
             LogUtils.d("navigatePage", "$old -> ${backStack.last()}", loc = loc)
+            // 从独立二级页再跳其它 Nav 页：先写回 Main 栈，再关掉独立 Activity
+            AppConfigActivity.finishIfShowing()
+            ActionLogActivity.finishIfShowing()
         }
     }
 

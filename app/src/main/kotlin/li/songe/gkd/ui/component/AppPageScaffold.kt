@@ -28,18 +28,21 @@ import top.yukonga.miuix.kmp.basic.Scaffold as MiuixScaffold
 
 /**
  * 二级页壳：MIUIX TopAppBar + MiuixScrollBehavior + BlurredBar（surface @ 0.87）。
+ *
+ * @param enableContentBlur 为 false 时关闭内容采样毛玻璃（WebView 等会持续重绘导致顶栏闪烁）。
  */
 @Composable
 fun AppPageScaffold(
     title: String,
     modifier: Modifier = Modifier,
+    enableContentBlur: Boolean = true,
     navigationIcon: @Composable () -> Unit = {},
     actions: @Composable RowScope.() -> Unit = {},
     floatingActionButton: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val store by storeFlow.collectAsState()
-    val blurActive = store.enableMiuixBlur && isRuntimeShaderSupported()
+    val blurActive = enableContentBlur && store.enableMiuixBlur && isRuntimeShaderSupported()
     val surfaceColor = MiuixTheme.colorScheme.surface
     val barColor = if (blurActive) Color.Transparent else surfaceColor
     val scrollBehavior = MiuixScrollBehavior()
@@ -82,11 +85,15 @@ fun AppPageScaffold(
             },
             floatingActionButton = floatingActionButton,
             content = { padding ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .layerBackdrop(backdrop),
-                ) {
+                if (blurActive) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .layerBackdrop(backdrop),
+                    ) {
+                        content(padding)
+                    }
+                } else {
                     content(padding)
                 }
             },

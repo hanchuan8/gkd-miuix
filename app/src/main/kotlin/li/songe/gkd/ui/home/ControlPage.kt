@@ -4,15 +4,24 @@ import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import top.yukonga.miuix.kmp.basic.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CheckCircleOutline
+import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -22,14 +31,18 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.Dispatchers
+import li.songe.gkd.META
 import li.songe.gkd.MainActivity
 import li.songe.gkd.R
 import li.songe.gkd.data.SubsConfig
@@ -59,18 +72,24 @@ import li.songe.gkd.ui.component.SettingItem
 import li.songe.gkd.ui.component.TextSwitch
 import li.songe.gkd.ui.component.textSize
 import li.songe.gkd.ui.component.useScrollBehaviorState
+import li.songe.gkd.ui.share.LocalDarkTheme
 import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.util.HOME_PAGE_URL
 import li.songe.gkd.util.ShortUrlSet
+import li.songe.gkd.util.appInfoMapFlow
 import li.songe.gkd.util.latestRecordDescFlow
 import li.songe.gkd.util.latestRecordFlow
 import li.songe.gkd.util.launchAsFn
+import li.songe.gkd.util.subsItemsFlow
 import li.songe.gkd.util.throttle
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
+import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.theme.MiuixTheme
+import top.yukonga.miuix.kmp.utils.PressFeedbackType
 
 @Composable
 fun useControlPage(): ScaffoldExt {
@@ -162,7 +181,9 @@ fun useControlPage(): ScaffoldExt {
                 }
             }
 
-            PreferenceGroup(title = "服务", showTop = appOpsRestricted) {
+            StatusOverviewSection()
+
+            PreferenceGroup(title = "服务", showTop = true) {
                 if (store.useA11y || actualA11yScopeAppList.contains(topAppIdFlow.collectAsState().value)) {
                     TextSwitch(
                         title = "服务状态",
@@ -263,6 +284,172 @@ fun useControlPage(): ScaffoldExt {
             }
 
             Spacer(modifier = Modifier.height(EmptyHeight))
+        }
+    }
+}
+
+@Composable
+private fun StatusOverviewSection() {
+    val mainVm = LocalMainViewModel.current
+    val store by storeFlow.collectAsState()
+    val a11yRunning by A11yService.isRunning.collectAsState()
+    val writeSecureSettings by writeSecureSettingsState.stateFlow.collectAsState()
+    val appOpsRestricted by appOpsRestrictedFlow.collectAsState()
+    val darkTheme = LocalDarkTheme.current
+    val colorScheme = MiuixTheme.colorScheme
+    val subsCount = subsItemsFlow.collectAsState().value.size
+    val appCount = appInfoMapFlow.collectAsState().value.size
+
+    val useA11y = store.useA11y || actualA11yScopeAppList.contains(topAppIdFlow.collectAsState().value)
+    val uiAutomation = uiAutomationFlow.collectAsState().value
+    val serviceRunning = if (useA11y) a11yRunning else uiAutomation != null
+
+    val statusTitle = if (serviceRunning) {
+        "运行中"
+    } else if (useA11y) {
+        if (writeSecureSettings) "未运行" else "未授权"
+    } else {
+        if (shizukuContextFlow.collectAsState().value.ok) "未运行" else "未授权"
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+            .padding(horizontal = 12.dp)
+            .padding(top = if (appOpsRestricted) 4.dp else 12.dp, bottom = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Card(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight(),
+            colors = CardDefaults.defaultColors(
+                color = when {
+                    !serviceRunning -> if (darkTheme) Color(0xFF3A2424) else Color(0xFFFDECEC)
+                    darkTheme -> Color(0xFF1A3825)
+                    else -> Color(0xFFDFFAE4)
+                },
+            ),
+            onClick = throttle {
+                mainVm.navigatePage(AuthA11yRoute)
+            },
+            showIndication = true,
+            pressFeedbackType = PressFeedbackType.Tilt,
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .offset(38.dp, 45.dp),
+                    contentAlignment = Alignment.BottomEnd,
+                ) {
+                    Icon(
+                        modifier = Modifier.size(170.dp),
+                        imageVector = if (serviceRunning) {
+                            Icons.Rounded.CheckCircleOutline
+                        } else {
+                            Icons.Rounded.ErrorOutline
+                        },
+                        tint = if (serviceRunning) {
+                            Color(0xFF36D167)
+                        } else {
+                            colorScheme.error.copy(alpha = 0.75f)
+                        },
+                        contentDescription = null,
+                    )
+                }
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(all = 16.dp),
+                ) {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = statusTitle,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = "版本: ${META.versionName}",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = colorScheme.onSurfaceVariantSummary,
+                    )
+                }
+            }
+        }
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight(),
+        ) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                insideMargin = PaddingValues(16.dp),
+                onClick = throttle {
+                    mainVm.handleClickTab(BottomNavItem.SubsManage)
+                },
+                showIndication = true,
+                pressFeedbackType = PressFeedbackType.Tilt,
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.Start,
+                ) {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = "订阅",
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 15.sp,
+                        color = colorScheme.onSurfaceVariantSummary,
+                    )
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = subsCount.toString(),
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colorScheme.onSurface,
+                    )
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                insideMargin = PaddingValues(16.dp),
+                onClick = throttle {
+                    mainVm.handleClickTab(BottomNavItem.AppList)
+                },
+                showIndication = true,
+                pressFeedbackType = PressFeedbackType.Tilt,
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.Start,
+                ) {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = "应用",
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 15.sp,
+                        color = colorScheme.onSurfaceVariantSummary,
+                    )
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = appCount.toString(),
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colorScheme.onSurface,
+                    )
+                }
+            }
         }
     }
 }

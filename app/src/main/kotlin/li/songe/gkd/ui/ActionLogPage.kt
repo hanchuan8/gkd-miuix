@@ -4,36 +4,24 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.LocalTextStyle
-import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -45,6 +33,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.serialization.Serializable
 import li.songe.gkd.data.ActionLog
+import li.songe.gkd.data.AppInfo
 import li.songe.gkd.data.ExcludeData
 import li.songe.gkd.data.RawSubscription
 import li.songe.gkd.data.SubsConfig
@@ -54,26 +43,25 @@ import li.songe.gkd.ui.component.AppPageScaffold
 import li.songe.gkd.ui.component.EmptyText
 import li.songe.gkd.ui.component.FixedTimeText
 import li.songe.gkd.ui.component.GroupNameText
-import li.songe.gkd.ui.component.LocalNumberCharWidth
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
 import li.songe.gkd.ui.component.TextListDialog
-import li.songe.gkd.ui.component.animateListItem
-import li.songe.gkd.ui.component.measureNumberTextWidth
 import li.songe.gkd.ui.component.useListScrollState
 import li.songe.gkd.ui.component.waitResult
 import li.songe.gkd.ui.share.ListPlaceholder
 import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.iconTextSize
-import li.songe.gkd.ui.style.itemHorizontalPadding
-import li.songe.gkd.ui.style.lineHeightDp
 import li.songe.gkd.ui.style.scaffoldPadding
+import li.songe.gkd.util.appInfoMapFlow
 import li.songe.gkd.util.launchAsFn
 import li.songe.gkd.util.mapState
 import li.songe.gkd.util.subsMapFlow
 import li.songe.gkd.util.throttle
 import li.songe.gkd.util.toast
+import top.yukonga.miuix.kmp.basic.Card
+import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Serializable
 data class ActionLogRoute(
@@ -83,252 +71,217 @@ data class ActionLogRoute(
 
 @Composable
 fun ActionLogPage(route: ActionLogRoute) {
-    val subsId = route.subsId
-    val appId = route.appId
     val mainVm = LocalMainViewModel.current
     val vm = viewModel { ActionLogVm(route) }
-    val resetKey = rememberSaveable { mutableIntStateOf(0) }
+    val logCount by vm.logCountFlow.collectAsState()
     val list = vm.pagingDataFlow.collectAsLazyPagingItems()
-    val listState = useListScrollState(resetKey, list.itemCount > 0)
-    val timeTextWidth = measureNumberTextWidth(MiuixTheme.textStyles.footnote1)
+    val listState = useListScrollState(list.itemCount > 0)
+    val subsMap by subsMapFlow.collectAsState()
+    val appInfoMap by appInfoMapFlow.collectAsState()
+    val subsId = route.subsId
+    val appId = route.appId
 
     AppPageScaffold(
         title = "触发记录",
+        // 列表进场时 content blur 会与 NavDisplay 转场同帧采样，易出 UI 线程尖峰
+        enableContentBlur = false,
         navigationIcon = {
             PerfIconButton(
                 imageVector = PerfIcon.ArrowBack,
-                onClick = {
-                    mainVm.popPage()
-                },
+                onClick = { mainVm.popPage() },
             )
         },
         actions = {
-            if (list.itemCount > 0) {
+            if (logCount > 0) {
                 PerfIconButton(
                     imageVector = PerfIcon.Delete,
                     onClick = throttle(fn = mainVm.viewModelScope.launchAsFn {
-                        val text = if (subsId != null) {
-                            "确定删除当前订阅所有触发记录?"
-                        } else if (appId != null) {
-                            "确定删除当前应用所有触发记录?"
-                        } else {
-                            "确定删除所有触发记录?"
+                        val text = when {
+                            subsId != null -> "确定删除当前订阅所有触发记录?"
+                            appId != null -> "确定删除当前应用所有触发记录?"
+                            else -> "确定删除所有触发记录?"
                         }
                         mainVm.dialogFlow.waitResult(
                             title = "删除记录",
                             text = text,
                             error = true,
                         )
-                        if (subsId != null) {
-                            DbSet.actionLogDao.deleteSubsAll(subsId)
-                        } else if (appId != null) {
-                            DbSet.actionLogDao.deleteAppAll(appId)
-                        } else {
-                            DbSet.actionLogDao.deleteAll()
+                        when {
+                            subsId != null -> DbSet.actionLogDao.deleteSubsAll(subsId)
+                            appId != null -> DbSet.actionLogDao.deleteAppAll(appId)
+                            else -> DbSet.actionLogDao.deleteAll()
                         }
                         toast("删除成功")
-                    })
+                    }),
                 )
             }
         },
     ) { contentPadding ->
-        CompositionLocalProvider(
-            LocalNumberCharWidth provides timeTextWidth
+        LazyColumn(
+            modifier = Modifier.scaffoldPadding(contentPadding),
+            state = listState,
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            LazyColumn(
-                modifier = Modifier.scaffoldPadding(contentPadding),
-                state = listState,
-            ) {
-                items(
-                    count = list.itemCount,
-                    key = list.itemKey { c -> c.first.id }
-                ) { i ->
-                    val item = list[i] ?: return@items
-                    val lastItem = if (i > 0) list[i - 1] else null
-                    ActionLogCard(
-                        modifier = Modifier.animateListItem(),
-                        i = i,
-                        item = item,
-                        lastItem = lastItem,
-                        onClick = {
-                            vm.showActionLogFlow.value = item.first
-                        },
-                        subsId = subsId,
-                        appId = appId,
-                    )
-                }
-                item(ListPlaceholder.KEY, ListPlaceholder.TYPE) {
-                    Spacer(modifier = Modifier.height(EmptyHeight))
-                    if (list.itemCount == 0 && list.loadState.refresh !is LoadState.Loading) {
-                        EmptyText(text = "暂无数据")
-                    }
+            items(
+                count = list.itemCount,
+                key = list.itemKey { c -> c.first.id },
+            ) { i ->
+                val item = list[i] ?: return@items
+                val lastItem = if (i > 0) list[i - 1] else null
+                ActionLogCard(
+                    item = item,
+                    lastItem = lastItem,
+                    onClick = { vm.showActionLogFlow.value = item.first },
+                    subsId = subsId,
+                    appId = appId,
+                    subscriptionName = subsMap[item.first.subsId]?.name,
+                    appInfo = appInfoMap[item.first.appId],
+                )
+            }
+            item(ListPlaceholder.KEY, ListPlaceholder.TYPE) {
+                Spacer(modifier = Modifier.height(EmptyHeight))
+                if (logCount == 0 && list.loadState.refresh !is LoadState.Loading) {
+                    EmptyText(text = "暂无数据")
                 }
             }
         }
-    }
 
-    vm.showActionLogFlow.collectAsState().value?.let {
-        ActionLogDialog(
-            vm = vm,
-            actionLog = it,
-            onDismissRequest = {
-                vm.showActionLogFlow.value = null
-            }
-        )
+        vm.showActionLogFlow.collectAsState().value?.let {
+            ActionLogDialog(
+                vm = vm,
+                actionLog = it,
+                onDismissRequest = { vm.showActionLogFlow.value = null },
+            )
+        }
     }
 }
-
 
 @Composable
 private fun ActionLogCard(
     modifier: Modifier = Modifier,
-    i: Int,
     item: Triple<ActionLog, RawSubscription.RawGroupProps?, RawSubscription.RawRuleProps?>,
     lastItem: Triple<ActionLog, RawSubscription.RawGroupProps?, RawSubscription.RawRuleProps?>?,
     onClick: () -> Unit,
     subsId: Long?,
     appId: String?,
+    subscriptionName: String?,
+    appInfo: AppInfo?,
 ) {
     val mainVm = LocalMainViewModel.current
     val (actionLog, group, rule) = item
     val lastActionLog = lastItem?.first
     val isDiffApp = actionLog.appId != lastActionLog?.appId
-    val verticalPadding = if (i == 0) 0.dp else if (isDiffApp) 12.dp else 8.dp
-    val subsIdToRaw by subsMapFlow.collectAsState()
-    val subscription = subsIdToRaw[actionLog.subsId]
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(
-                start = itemHorizontalPadding / 2,
-                end = itemHorizontalPadding / 2,
-                top = verticalPadding
-            )
-    ) {
+    val colorScheme = MiuixTheme.colorScheme
+
+    Column(modifier = modifier.fillMaxWidth()) {
         if (isDiffApp && appId == null) {
             Row(
                 modifier = Modifier
-                    .padding(start = itemHorizontalPadding / 4)
+                    .fillMaxWidth()
+                    .padding(top = if (lastItem == null) 0.dp else 4.dp)
                     .clip(RoundedCornerShape(8.dp))
                     .clickable(onClick = throttle {
-                        mainVm.navigatePage(
-                            AppConfigRoute(
-                                appId = actionLog.appId,
-                            )
-                        )
+                        mainVm.navigatePage(AppConfigRoute(appId = actionLog.appId))
                     })
-                    .fillMaxWidth()
-                    .padding(start = 5.dp),
+                    .padding(horizontal = 4.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                CompositionLocalProvider(LocalContentColor provides MiuixTheme.colorScheme.primary) {
-                    Spacer(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(MiuixTheme.colorScheme.secondary)
-                            .size(4.dp)
+                AppNameText(
+                    appId = actionLog.appId,
+                    appInfo = appInfo,
+                    modifier = Modifier.weight(1f),
+                    style = MiuixTheme.textStyles.subtitle,
+                    color = colorScheme.primary,
+                )
+                PerfIcon(
+                    imageVector = PerfIcon.KeyboardArrowRight,
+                    modifier = Modifier.iconTextSize(),
+                    tint = colorScheme.primary,
+                )
+            }
+        }
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            insideMargin = PaddingValues(16.dp),
+            onClick = onClick,
+            showIndication = true,
+        ) {
+            FixedTimeText(
+                text = actionLog.date,
+                style = MiuixTheme.textStyles.footnote1,
+                color = colorScheme.onSurfaceVariantSummary,
+            )
+            val showActivityId = actionLog.showActivityId
+            if (showActivityId != null) {
+                Text(
+                    text = showActivityId,
+                    style = MiuixTheme.textStyles.body2,
+                    softWrap = false,
+                    maxLines = 1,
+                    overflow = TextOverflow.MiddleEllipsis,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            } else {
+                Text(
+                    text = "null",
+                    style = MiuixTheme.textStyles.body2,
+                    color = colorScheme.onSurfaceVariantSummary.copy(alpha = 0.5f),
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+            if (subsId == null) {
+                Row(
+                    modifier = Modifier.padding(top = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(
+                        text = subscriptionName ?: "id=${actionLog.subsId}",
+                        style = MiuixTheme.textStyles.body2,
                     )
-                    AppNameText(appId = actionLog.appId, modifier = Modifier.weight(1f))
-                    PerfIcon(
-                        imageVector = PerfIcon.KeyboardArrowRight,
-                        modifier = Modifier.iconTextSize(),
+                    Text(
+                        text = "v${item.first.subsVersion}",
+                        style = MiuixTheme.textStyles.footnote2,
+                        color = colorScheme.primary,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(colorScheme.primaryContainer)
+                            .padding(horizontal = 4.dp, vertical = 1.dp),
                     )
                 }
             }
-        }
-        Row(
-            modifier = Modifier
-                .padding(start = itemHorizontalPadding / 4)
-                .clip(RoundedCornerShape(8.dp))
-                .clickable(onClick = onClick)
-                .fillMaxWidth()
-                .height(IntrinsicSize.Min)
-                .padding(start = itemHorizontalPadding / 4),
-        ) {
-            if (appId == null) {
-                Spacer(modifier = Modifier.width(2.dp))
-            }
-            Spacer(
+            Row(
                 modifier = Modifier
-                    .fillMaxHeight()
-                    .width(2.dp)
-                    .background(MiuixTheme.colorScheme.primaryContainer),
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Column(
-                modifier = Modifier.weight(1f)
+                    .fillMaxWidth()
+                    .padding(top = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                FixedTimeText(
-                    text = actionLog.date,
-                    style = MiuixTheme.textStyles.footnote1,
-                    color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                )
-                CompositionLocalProvider(LocalTextStyle provides MiuixTheme.textStyles.body2) {
-                    val showActivityId = actionLog.showActivityId
-                    if (showActivityId != null) {
-                        Text(
-                            text = showActivityId,
-                            softWrap = false,
-                            maxLines = 1,
-                            overflow = TextOverflow.MiddleEllipsis,
-                        )
+                val groupDesc = group?.name.toString()
+                GroupNameText(
+                    isGlobal = actionLog.groupType == SubsConfig.GlobalGroupType,
+                    text = groupDesc,
+                    style = MiuixTheme.textStyles.body2,
+                    color = if (group?.name == null) {
+                        colorScheme.onSurface.copy(alpha = 0.5f)
                     } else {
-                        Text(
-                            text = "null",
-                            color = MiuixTheme.colorScheme.onSurfaceVariantSummary.copy(alpha = 0.5f),
-                        )
-                    }
-                    if (subsId == null) {
-                        Row {
-                            Text(text = subscription?.name ?: "id=${actionLog.subsId}")
-                            val lineHeightDp = LocalDensity.current.let {
-                                LocalTextStyle.current.lineHeightDp(it)
-                            }
-                            Row(
-                                modifier = Modifier
-                                    .height(lineHeightDp)
-                                    .padding(start = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "v${item.first.subsVersion}",
-                                    style = MiuixTheme.textStyles.footnote2,
-                                    color = MiuixTheme.colorScheme.primary,
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(4.dp))
-                                        .background(MiuixTheme.colorScheme.primaryContainer)
-                                        .padding(horizontal = 4.dp),
-                                )
-                            }
-                        }
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        val groupDesc = group?.name.toString()
-                        val textColor = LocalContentColor.current.let {
-                            if (group?.name == null) it.copy(alpha = 0.5f) else it
-                        }
-                        GroupNameText(
-                            isGlobal = actionLog.groupType == SubsConfig.GlobalGroupType,
-                            text = groupDesc,
-                            color = textColor,
-                        )
-                        val ruleDesc = rule?.name ?: (if ((group?.rules?.size ?: 0) > 1) {
-                            val keyDesc = actionLog.ruleKey?.let { "key=$it, " } ?: ""
-                            "${keyDesc}index=${actionLog.ruleIndex}"
-                        } else {
-                            null
-                        })
-                        if (ruleDesc != null) {
-                            Text(
-                                text = ruleDesc,
-                                modifier = Modifier.padding(start = 8.dp),
-                                color = MiuixTheme.colorScheme.onSurfaceVariantSummary,
-                            )
-                        }
-                    }
+                        colorScheme.onSurface
+                    },
+                )
+                val ruleDesc = rule?.name ?: (if ((group?.rules?.size ?: 0) > 1) {
+                    val keyDesc = actionLog.ruleKey?.let { "key=$it, " } ?: ""
+                    "${keyDesc}index=${actionLog.ruleIndex}"
+                } else {
+                    null
+                })
+                if (ruleDesc != null) {
+                    Text(
+                        text = ruleDesc,
+                        style = MiuixTheme.textStyles.body2,
+                        modifier = Modifier.padding(start = 8.dp),
+                        color = colorScheme.onSurfaceVariantSummary,
+                    )
                 }
             }
         }

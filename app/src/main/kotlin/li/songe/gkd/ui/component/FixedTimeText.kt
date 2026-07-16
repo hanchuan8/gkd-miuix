@@ -1,7 +1,5 @@
 package li.songe.gkd.ui.component
 
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.LocalTextStyle
 import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
@@ -11,43 +9,37 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 
-val LocalNumberCharWidth = compositionLocalOf<Dp> { error("not found DestinationsNavigator") }
+val LocalNumberCharWidth = compositionLocalOf { 0.dp }
 
 @Composable
 fun measureNumberTextWidth(style: TextStyle = LocalTextStyle.current): Dp {
     val textMeasurer = rememberTextMeasurer()
-    val widthInPixels = "1234567890".map { c ->
-        textMeasurer.measure(c.toString(), style).size.width
-    }.average().toFloat()
+    val widthInPixels = textMeasurer.measure("0", style).size.width.toFloat()
     return with(LocalDensity.current) { widthInPixels.toDp() }
 }
 
+/**
+ * 时间等宽数字文本。
+ *
+ * 旧实现按字符拆成多个 Text，列表一屏会多出上百个节点，进页/滑动极易掉帧。
+ * 现用单个 Text + `tnum`（tabular figures）保持数字列对齐。
+ */
 @Composable
 fun FixedTimeText(
     text: String,
     modifier: Modifier = Modifier,
     color: Color = Color.Unspecified,
     style: TextStyle = LocalTextStyle.current,
-    charWidth: Dp = LocalNumberCharWidth.current,
 ) {
-    Row(modifier = modifier) {
-        text.forEach { c ->
-            Text(
-                text = c.toString(),
-                style = style,
-                modifier = if (c.isDigit()) {
-                    Modifier.width(charWidth)
-                } else {
-                    Modifier
-                },
-                color = color,
-                softWrap = false,
-                maxLines = 1,
-                textAlign = TextAlign.Center,
-            )
-        }
-    }
+    Text(
+        text = text,
+        modifier = modifier,
+        style = style.copy(fontFeatureSettings = "tnum"),
+        color = color,
+        softWrap = false,
+        maxLines = 1,
+    )
 }

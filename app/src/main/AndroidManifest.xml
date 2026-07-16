@@ -67,6 +67,14 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".ActionLogActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".AppConfigActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme" />
+        <activity
             android:name=".OpenSchemeActivity"
             android:exported="true"
             android:theme="@style/TransparentTheme">

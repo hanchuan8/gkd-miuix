@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -54,7 +55,6 @@ import li.songe.gkd.ui.component.MenuItemRadioButton
 import li.songe.gkd.ui.component.PerfIcon
 import li.songe.gkd.ui.component.PerfIconButton
 import li.songe.gkd.ui.component.RuleGroupCard
-import li.songe.gkd.ui.component.animateListItem
 import li.songe.gkd.ui.component.toGroupState
 import li.songe.gkd.ui.component.useListScrollState
 import li.songe.gkd.ui.icon.BackCloseIcon
@@ -344,7 +344,7 @@ fun AppConfigPage(route: AppConfigRoute) {
                             )
                     }
                     RuleGroupCard(
-                        modifier = Modifier.animateListItem(),
+                        modifier = Modifier,
                         subs = entry.subscription,
                         appId = appId,
                         group = group,

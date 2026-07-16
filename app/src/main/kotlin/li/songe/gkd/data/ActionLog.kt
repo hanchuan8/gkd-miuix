@@ -76,6 +76,12 @@ data class ActionLog(
         @Query("SELECT COUNT(*) FROM action_log")
         fun count(): Flow<Int>
 
+        @Query("SELECT COUNT(*) FROM action_log WHERE subs_id=:subsId")
+        fun countSubs(subsId: Long): Flow<Int>
+
+        @Query("SELECT COUNT(*) FROM action_log WHERE app_id=:appId")
+        fun countApp(appId: String): Flow<Int>
+
 
         @Query("SELECT * FROM action_log ORDER BY id DESC LIMIT 1")
         fun queryLatest(): Flow<ActionLog?>

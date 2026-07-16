@@ -78,14 +78,10 @@ import li.songe.gkd.ui.A11yEventLogRoute
 import li.songe.gkd.ui.A11yScopeAppListPage
 import li.songe.gkd.ui.AboutPage
 import li.songe.gkd.ui.AboutRoute
-import li.songe.gkd.ui.ActionLogPage
-import li.songe.gkd.ui.ActionLogRoute
 import li.songe.gkd.ui.ActivityLogPage
 import li.songe.gkd.ui.ActivityLogRoute
 import li.songe.gkd.ui.AdvancedPage
 import li.songe.gkd.ui.AdvancedPageRoute
-import li.songe.gkd.ui.AppConfigPage
-import li.songe.gkd.ui.AppConfigRoute
 import li.songe.gkd.ui.AppOpsAllowPage
 import li.songe.gkd.ui.AppOpsAllowRoute
 import li.songe.gkd.ui.AuthA11yPage
@@ -151,6 +147,11 @@ import kotlin.concurrent.Volatile
 import kotlin.reflect.jvm.jvmName
 
 class MainActivity : ComponentActivity() {
+
+    companion object {
+        private var instanceRef: java.lang.ref.WeakReference<MainActivity>? = null
+        val current: MainActivity? get() = instanceRef?.get()
+    }
     val startTime = System.currentTimeMillis()
     val mainVm by viewModels<MainViewModel>()
     val launcher by lazy { StartActivityLauncher(this) }
@@ -232,6 +233,7 @@ class MainActivity : ComponentActivity() {
         // 必须在 super.onCreate 前写入 ApplicationInfo，系统才会按开关启用预测式返回
         applyPredictiveBackEnabled(storeFlow.value.enablePredictiveBack)
         super.onCreate(savedInstanceState)
+        instanceRef = java.lang.ref.WeakReference(this)
         LogUtils.d()
         mainVm
         launcher
@@ -264,6 +266,7 @@ class MainActivity : ComponentActivity() {
                         ),
                         backStack = mainVm.backStack,
                         onBack = mainVm::popPage,
+                        // 与 KernelSU 一致：miuix-navigation3 默认转场（圆角裁切 + 压暗）
                         entryProvider = entryProvider {
                             entry<HomeRoute> { HomePage() }
                             entry<AuthA11yRoute> { AuthA11yPage() }
@@ -283,11 +286,9 @@ class MainActivity : ComponentActivity() {
                             entry<SubsCategoryRoute> { SubsCategoryPage(it) }
                             entry<SubsGlobalGroupListRoute> { SubsGlobalGroupListPage(it) }
                             entry<SubsGlobalGroupExcludeRoute> { SubsGlobalGroupExcludePage(it) }
-                            entry<ActionLogRoute> { ActionLogPage(it) }
                             entry<ImagePreviewRoute> { ImagePreviewPage(it) }
                             entry<UpsertRuleGroupRoute> { UpsertRuleGroupPage(it) }
                             entry<SubsAppGroupListRoute> { SubsAppGroupListPage(it) }
-                            entry<AppConfigRoute> { AppConfigPage(it) }
                             entry<CrashReportRoute> { CrashReportPage() }
                             entry<SubsCategoryGroupRoute> { SubsCategoryGroupPage(it) }
                         },
@@ -353,6 +354,9 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        if (instanceRef?.get() === this) {
+            instanceRef = null
+        }
         super.onDestroy()
         LogUtils.d()
     }

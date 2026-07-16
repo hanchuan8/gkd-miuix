@@ -56,11 +56,13 @@ fun WebViewPage(route: WebViewRoute) {
     val webViewState = rememberWebViewState(url = initUrl)
     val webViewClient = remember { GkdWebViewClient() }
     val webView = remember { Value<WebView?>(null) }
-    // webViewState.pageTitle 在调用 reload 后会变成 null
+    // webViewState.pageTitle 在调用 reload 后会变成 null；加载中不要改标题，避免顶栏反复重绘闪烁
     val pageTitle = webViewState.pageTitle ?: webView.value?.title ?: ""
     val loading = webViewState.loadingState is LoadingState.Loading
+    // WebView 持续重绘时不能采样内容做毛玻璃，否则顶栏会不停闪烁
     AppPageScaffold(
-        title = if (loading) "加载中…" else pageTitle.ifEmpty { "网页" },
+        title = pageTitle.ifEmpty { "网页" },
+        enableContentBlur = false,
         navigationIcon = {
             PerfIconButton(
                 imageVector = PerfIcon.ArrowBack,

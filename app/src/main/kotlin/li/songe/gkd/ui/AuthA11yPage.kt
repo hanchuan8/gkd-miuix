@@ -58,6 +58,7 @@ import li.songe.gkd.util.openA11ySettings
 import li.songe.gkd.util.shFolder
 import li.songe.gkd.util.throttle
 import li.songe.gkd.util.toast
+import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.RadioButton
@@ -144,25 +145,27 @@ fun AuthA11yPage() {
                         )
                     },
                     contentFalse = {
-                        Row(
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = cardHorizontalPadding),
-                            verticalAlignment = Alignment.Bottom,
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                                .padding(horizontal = cardHorizontalPadding)
+                                .padding(top = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             TextButton(
+                                modifier = Modifier.fillMaxWidth(),
                                 text = "手动授权",
+                                colors = ButtonDefaults.textButtonColorsPrimary(),
                                 onClick = throttle { openA11ySettings() },
                             )
                             Text(
                                 modifier = Modifier
-                                    .padding(bottom = 12.dp)
+                                    .align(Alignment.End)
                                     .clip(RoundedCornerShape(4.dp))
                                     .clickable(onClick = throttle {
                                         mainVm.navigateWebPage(ShortUrlSet.URL2)
                                     })
-                                    .padding(horizontal = 4.dp),
+                                    .padding(horizontal = 4.dp, vertical = 2.dp),
                                 text = "无法开启无障碍?",
                                 style = MiuixTheme.textStyles.body2,
                                 color = MiuixTheme.colorScheme.primary,
@@ -201,11 +204,14 @@ fun AuthA11yPage() {
                     contentFalse = {
                         Row(
                             modifier = Modifier
-                                .padding(horizontal = cardHorizontalPadding),
+                                .fillMaxWidth()
+                                .padding(horizontal = cardHorizontalPadding)
+                                .padding(top = 8.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            ShizukuAuthButton()
+                            ShizukuAuthButton(modifier = Modifier.weight(1f))
                             TextButton(
+                                modifier = Modifier.weight(1f),
                                 text = "命令授权",
                                 onClick = { vm.showCopyDlgFlow.value = true },
                             )
@@ -214,7 +220,9 @@ fun AuthA11yPage() {
                 )
                 TextButton(
                     modifier = Modifier
-                        .padding(horizontal = cardHorizontalPadding),
+                        .fillMaxWidth()
+                        .padding(horizontal = cardHorizontalPadding)
+                        .padding(top = 8.dp),
                     text = "无感保活",
                     onClick = throttle {
                         if (!writeSecureSettings) {
@@ -277,14 +285,18 @@ fun AuthA11yPage() {
                     },
                     contentFalse = {
                         ShizukuAuthButton(
-                            modifier = Modifier.padding(
-                                start = cardHorizontalPadding
-                            )
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = cardHorizontalPadding)
+                                .padding(top = 8.dp),
                         )
                     }
                 )
                 TextButton(
-                    modifier = Modifier.padding(start = cardHorizontalPadding),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = cardHorizontalPadding)
+                        .padding(top = 8.dp),
                     text = "局部无障碍",
                     onClick = throttle {
                         mainVm.navigatePage(A11YScopeAppListRoute)
