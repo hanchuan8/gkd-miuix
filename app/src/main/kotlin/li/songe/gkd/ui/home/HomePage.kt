@@ -234,7 +234,7 @@ private fun MiuixFloatingNavScaffold(
     val glassActive = blurActive
     val floatingBarColor = if (glassActive) Color.Transparent else surfaceContainer
     val navInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    // 对标 KernelSU：悬浮底栏区域约 112dp + 系统导航；略加余量避免列表被胶囊栏遮住
+    // 悬浮底栏区域约 112dp + 系统导航；略加余量避免列表被胶囊栏遮住
     val floatingBarBody = if (liquidGlass) 72.dp + 40.dp else 52.dp + 40.dp
     val contentBottomSpace = 112.dp + navInset
     // 应用页白名单编辑仍有 FAB，再留出高度
@@ -342,7 +342,7 @@ private fun MiuixBlurredTopBar(
                     backdrop = backdrop,
                     shape = RectangleShape,
                     blurRadius = 25f,
-                    // 对标 KernelSU BlurExt：surface @ 0.87
+                    // 顶栏毛玻璃：surface @ 0.87
                     colors = BlurColors(
                         blendColors = listOf(
                             BlendColorEntry(color = MiuixTheme.colorScheme.surface.copy(alpha = 0.87f)),
