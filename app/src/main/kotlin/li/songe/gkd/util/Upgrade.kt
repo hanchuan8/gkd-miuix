@@ -41,6 +41,18 @@ import kotlin.time.Duration.Companion.days
 private val UPDATE_URL: String
     get() = UpdateChannelOption.objects.findOption(storeFlow.value.updateChannel).url
 
+/** 主源失败时在 jsDelivr 与 GitHub raw 之间互为回退 */
+private fun updateCheckUrls(primary: String): List<String> {
+    val jsdelivr = "https://cdn.jsdelivr.net/gh/hanchuan8/gkd-miuix@main/"
+    val raw = "https://raw.githubusercontent.com/hanchuan8/gkd-miuix/main/"
+    val alternate = when {
+        primary.startsWith(jsdelivr) -> raw + primary.removePrefix(jsdelivr)
+        primary.startsWith(raw) -> jsdelivr + primary.removePrefix(raw)
+        else -> null
+    }
+    return listOfNotNull(primary, alternate)
+}
+
 @Serializable
 data class NewVersion(
     val versionCode: Int,
@@ -86,7 +98,7 @@ class UpdateStatus(val scope: CoroutineScope) {
             if (!NetworkUtils.isAvailable()) {
                 error("网络不可用")
             }
-            val newVersion = client.get(UPDATE_URL).body<NewVersion>()
+            val newVersion = fetchNewVersion()
             if (newVersion.versionCode <= META.versionCode) {
                 if (manual) toast("暂无更新")
                 return@launchTry
@@ -95,6 +107,18 @@ class UpdateStatus(val scope: CoroutineScope) {
             newVersionFlow.value = newVersion
         }
     }.let { }
+
+    private suspend fun fetchNewVersion(): NewVersion {
+        var lastError: Throwable? = null
+        for (url in updateCheckUrls(UPDATE_URL)) {
+            try {
+                return client.get(url).body()
+            } catch (e: Throwable) {
+                lastError = e
+            }
+        }
+        throw lastError ?: Exception("检查更新失败")
+    }
 
     private fun startDownload(newVersion: NewVersion) {
         if (downloadStatusFlow.value is LoadStatus.Loading) return
@@ -137,19 +161,16 @@ class UpdateStatus(val scope: CoroutineScope) {
     @Composable
     fun UpgradeDialog() {
         newVersionFlow.collectAsState().value?.let { newVersionVal ->
-            val text = remember {
+            val text = remember(newVersionVal) {
                 val logs = newVersionVal.versionLogs.takeWhile { v ->
                     v.code > META.versionCode
                 }
-                "v${META.versionName} -> v${newVersionVal.versionName}\n\n${
-                    if (logs.size > 1) {
-                        logs.joinToString("\n\n") { v -> "v${v.name}\n${v.desc}" }
-                    } else if (logs.isNotEmpty()) {
-                        logs.first().desc
-                    } else {
-                        ""
-                    }
-                }".trimEnd()
+                val body = when {
+                    logs.size > 1 -> logs.joinToString("\n\n") { v -> "v${v.name}\n${v.desc}" }
+                    logs.isNotEmpty() -> logs.first().desc
+                    else -> newVersionVal.changelog
+                }
+                "v${META.versionName} -> v${newVersionVal.versionName}\n\n$body".trimEnd()
             }
             PerfAlertDialog(
                 title = {

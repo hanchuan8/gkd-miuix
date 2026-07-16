@@ -3,9 +3,6 @@
 ## v1.1.0
 
 - 触发记录、应用配置（含「最近触发」）改为独立 Activity，缓解进页转场掉帧
-- 首页 HorizontalPager + 转场就绪后再预组邻 Tab
-- 关于页 KernelSU 风格动态背景（BgEffect）与滚动渐变
-- 触发记录列表性能：时间文本单节点、分页精简、关闭进场 content blur
 
 ## v1.0.0（首版）
 

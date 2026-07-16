@@ -1,8 +1,19 @@
 {
-  "versionCode": 92,
-  "versionName": "1.12.1",
-  "changelog": "GKD MIUIX 首版 v1.0.0\n\n- 全量 MIUIX 界面（顶栏模糊、悬浮底栏、液态玻璃）\n- 预测式返回、动态取色默认关闭\n- 订阅添加/刷新加载进度提示\n- 触发提示支持流体云 / 灵动岛实时通知",
-  "downloadUrl": "https://github.com/hanchuan8/gkd-miuix/releases/latest",
-  "fileSize": 1,
-  "versionLogs": []
+  "versionCode": 93,
+  "versionName": "1.1.0",
+  "changelog": "v1.1.0\n\n- 触发记录、应用配置（含「最近触发」）改为独立 Activity，缓解进页转场掉帧",
+  "downloadUrl": "https://github.com/hanchuan8/gkd-miuix/releases/download/v1.1.0/gkd-v1.1.0.apk",
+  "fileSize": 3473883,
+  "versionLogs": [
+    {
+      "name": "1.1.0",
+      "code": 93,
+      "desc": "- 触发记录、应用配置（含「最近触发」）改为独立 Activity，缓解进页转场掉帧"
+    },
+    {
+      "name": "1.0.0",
+      "code": 92,
+      "desc": "- 全量 MIUIX 界面（顶栏模糊、悬浮底栏、液态玻璃 FAB）\n- 预测式返回开关；动态取色默认关闭\n- 订阅添加/修改/刷新时显示加载进度\n- 触发提示支持流体云 / 灵动岛实时通知，并可自定义存在时间"
+    }
+  ]
 }
