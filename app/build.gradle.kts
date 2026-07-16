@@ -62,7 +62,7 @@ plugins {
 android {
     namespace = "li.songe.gkd"
     defaultConfig {
-        applicationId = "li.songe.gkd"
+        applicationId = "li.songe.gkdx"
         versionCode = 93
         versionName = "1.1.0"
 
@@ -163,7 +163,7 @@ if (project.hasProperty("GKD_RENAME_APK_FLAG")) {
     androidComponents.onVariants { variant ->
         variant.outputs.onEach { output ->
             output as VariantOutputImpl
-            output.outputFileName = "gkd-v${output.versionName.get()}.apk"
+            output.outputFileName = "gkd-x-v${output.versionName.get()}.apk"
         }
     }
 }

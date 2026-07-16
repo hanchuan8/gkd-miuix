@@ -1,10 +1,10 @@
-# GKD (gkd-miuix)
+# GKD-X (gkd-miuix)
 
 基于 [GKD](https://github.com/gkd-kit/gkd) 的 Android 自定义屏幕点击应用分支，界面全面适配 [compose-miuix-ui](https://github.com/compose-miuix-ui/miuix)。
 
 通过自定义规则，在指定界面满足条件（如屏幕存在特定文字）时，点击节点、位置或执行其他操作。
 
-- **应用**：GKD
+- **应用**：GKD-X（`li.songe.gkdx`）
 - **界面**：MIUIX（顶栏 / 底栏 / 设置分组 / 对话框 / 图标等）
 - **能力**：与上游 GKD 相同的选择器、订阅规则、快照与自动化能力
 

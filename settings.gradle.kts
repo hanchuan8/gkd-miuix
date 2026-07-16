@@ -1,4 +1,4 @@
-rootProject.name = "gkd-miuix"
+rootProject.name = "gkd-x"
 include(
     ":app",
     ":hidden_api",

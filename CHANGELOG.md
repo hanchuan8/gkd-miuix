@@ -2,6 +2,7 @@
 
 ## v1.1.0
 
+- 应用更名为 GKD-X，安装包名改为 `li.songe.gkdx`（可与原版 GKD 并存）
 - 触发记录、应用配置（含「最近触发」）改为独立 Activity，缓解进页转场掉帧
 
 ## v1.0.0（首版）
@@ -24,5 +25,5 @@
 
 ## 更新方式
 
-- GKD - 设置 - 关于 - 检测更新
+- GKD-X - 设置 - 关于 - 检测更新
 - 或前往 [GitHub Releases](https://github.com/hanchuan8/gkd-miuix/releases) 下载
