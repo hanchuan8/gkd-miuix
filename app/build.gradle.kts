@@ -63,8 +63,8 @@ android {
     namespace = "li.songe.gkd"
     defaultConfig {
         applicationId = "li.songe.gkdx"
-        versionCode = 93
-        versionName = "1.1.0"
+        versionCode = 94
+        versionName = "1.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

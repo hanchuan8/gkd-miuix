@@ -1,10 +1,15 @@
 {
-  "versionCode": 93,
-  "versionName": "1.1.0",
-  "changelog": "v1.1.0\n\n- 应用更名为 GKD-X，安装包名改为 li.songe.gkdx（可与原版 GKD 并存）\n- 触发记录、应用配置（含「最近触发」）改为独立 Activity，缓解进页转场掉帧",
-  "downloadUrl": "https://github.com/hanchuan8/gkd-miuix/releases/download/v1.1.0/gkd-x-v1.1.0.apk",
-  "fileSize": 3473879,
+  "versionCode": 94,
+  "versionName": "1.2.0",
+  "changelog": "v1.2.0\n\n- 去掉设置分组外的分类小字标题（如「服务」「数据概览」「快捷入口」等），更贴合 MIUIX 观感",
+  "downloadUrl": "https://github.com/hanchuan8/gkd-miuix/releases/download/v1.2.0/gkd-x-v1.2.0.apk",
+  "fileSize": 1,
   "versionLogs": [
+    {
+      "name": "1.2.0",
+      "code": 94,
+      "desc": "- 去掉设置分组外的分类小字标题（如「服务」「数据概览」「快捷入口」等），更贴合 MIUIX 观感"
+    },
     {
       "name": "1.1.0",
       "code": 93,
