@@ -7,21 +7,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import top.yukonga.miuix.kmp.basic.Card
-import top.yukonga.miuix.kmp.basic.SmallTitle
 
-/** 设置分组：圆角 Card + SmallTitle */
+/** 设置分组：圆角 Card（MIUIX 下不展示分类小字标题） */
 @Composable
 fun PreferenceGroup(
-    title: String? = null,
-    showTop: Boolean = true,
+    @Suppress("UNUSED_PARAMETER") title: String? = null,
+    @Suppress("UNUSED_PARAMETER") showTop: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    if (title != null) {
-        SmallTitle(
-            text = title,
-            modifier = if (showTop) Modifier else Modifier.padding(top = 0.dp),
-        )
-    }
     Card(
         modifier = Modifier
             .fillMaxWidth()

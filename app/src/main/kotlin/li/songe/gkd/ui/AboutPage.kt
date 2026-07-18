@@ -108,7 +108,6 @@ import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold
-import top.yukonga.miuix.kmp.basic.SmallTitle
 import top.yukonga.miuix.kmp.basic.SmallTopAppBar
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
@@ -588,14 +587,13 @@ fun AboutPage() {
 
 @Composable
 private fun AboutSectionCard(
-    title: String,
+    @Suppress("UNUSED_PARAMETER") title: String,
     enableBlur: Boolean,
     backdrop: LayerBackdrop,
     blendColors: List<BlendColorEntry>,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(modifier = Modifier.padding(bottom = 8.dp)) {
-        SmallTitle(text = title)
         Card(
             modifier = Modifier
                 .padding(horizontal = 12.dp)
