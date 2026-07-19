@@ -516,7 +516,7 @@ fun useSettingsPage(): ScaffoldExt {
                         )
                         SettingItem(
                             title = "发送测试通知",
-                            subtitle = "预览当前样式；实时通知会显示是否被系统识别为 Live Update",
+                            subtitle = "应用内不会上岛，请下拉通知栏查看是否存在实时通知",
                             onClick = throttle(vm.viewModelScope.launchAsFn {
                                 if (store.resolveActionTipStyle() == ActionTipStyleOption.LiveNotif) {
                                     requiredPermission(context, notificationState)
@@ -527,7 +527,12 @@ fun useSettingsPage(): ScaffoldExt {
                                     .replace($$"${3}", "1")
                                 val result = showActionTip(sample)
                                 if (result != null) {
-                                    toast(result.message)
+                                    val tip = if (store.resolveActionTipStyle() == ActionTipStyleOption.LiveNotif) {
+                                        "已发送；应用内不会上岛，请在通知栏查看是否存在实时通知"
+                                    } else {
+                                        result.message
+                                    }
+                                    toast(tip)
                                     if (result.canPostPromoted == false) {
                                         ActionTipNotif.openPromotedSettings()
                                     }

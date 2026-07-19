@@ -1,10 +1,15 @@
 {
-  "versionCode": 95,
-  "versionName": "1.2.1",
-  "changelog": "v1.2.1（测试通道）\n\n- 实时通知同时适配 ColorOS 流体云与 HyperOS 超级岛\n- 超级岛参数改为官方摘要态模板（含 miui.focus.pics）",
-  "downloadUrl": "https://github.com/hanchuan8/gkd-miuix/releases/download/v1.2.1/gkd-x-v1.2.1.apk",
-  "fileSize": 3473855,
+  "versionCode": 96,
+  "versionName": "1.2.2",
+  "changelog": "v1.2.2（测试通道）\n\n- 测试通知文案说明：应用内不会上岛，请在通知栏查看实时通知",
+  "downloadUrl": "https://github.com/hanchuan8/gkd-miuix/releases/download/v1.2.2/gkd-x-v1.2.2.apk",
+  "fileSize": 1,
   "versionLogs": [
+    {
+      "name": "1.2.2",
+      "code": 96,
+      "desc": "- 测试通知文案说明：应用内不会上岛，请在通知栏查看实时通知"
+    },
     {
       "name": "1.2.1",
       "code": 95,
