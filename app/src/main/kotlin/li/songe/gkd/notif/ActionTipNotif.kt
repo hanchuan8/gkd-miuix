@@ -6,7 +6,9 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.graphics.drawable.Icon
+import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
@@ -22,11 +24,15 @@ import li.songe.gkd.util.componentName
 import org.json.JSONObject
 
 /**
- * 触发提示「实时通知」。
+ * 触发提示「实时通知」—— ColorOS 流体云 + HyperOS 超级岛 共存。
  *
- * Google Live Update API 在一部分国产 Android 16 上 [SDK_INT] 已到 36，但 framework
- * 可能缺方法（如 isRequestPromotedOngoing），直接调用会 NoSuchMethodError。
- * 因此全部经反射探测，缺啥就跳过，保证至少能发出普通 ongoing 通知。
+ * 同一条 ongoing 通知叠两层能力，各系统只认自己的字段：
+ * 1. Google Live Update（ProgressStyle + setRequestPromotedOngoing）
+ *    → ColorOS 16 流体云 / AOSP 状态栏芯片
+ * 2. HyperOS 客户端岛参数（miui.focus.param + miui.focus.pics）
+ *    → 小米超级岛 / 焦点通知
+ *
+ * Live Update 相关 API 一律反射调用，避免国产 ROM 缺方法时 linkage 崩溃。
  */
 object ActionTipNotif {
     const val ID = 200
@@ -44,7 +50,7 @@ object ActionTipNotif {
     private val mainHandler = Handler(Looper.getMainLooper())
     private var cancelRunnable: Runnable? = null
 
-    /** 设备 framework 是否具备 Live Update 构建能力（与 SDK_INT 解耦） */
+    /** ColorOS / AOSP：framework 是否具备 Live Update 构建能力（与 SDK_INT 解耦） */
     private val liveUpdateBuildSupport: Boolean by lazy {
         if (Build.VERSION.SDK_INT < 36) return@lazy false
         try {
@@ -104,31 +110,40 @@ object ActionTipNotif {
         val notification = buildNotification(content, dismissMs)
         val canPromote = safeCanPostPromoted()
         val promotable = safeHasPromotable(notification)
+        val focusProtocol = readFocusProtocolVersion()
+        val canShowFocus = readCanShowFocus()
+        val hyperOs = focusProtocol >= 2 || canShowFocus != null
         LogUtils.d(
             "ActionTipNotif liveBuild=$liveUpdateBuildSupport " +
-                "canPostPromoted=$canPromote promotable=$promotable",
+                "canPostPromoted=$canPromote promotable=$promotable " +
+                "focusProtocol=$focusProtocol canShowFocus=$canShowFocus",
         )
         @SuppressLint("MissingPermission")
         NotificationManagerCompat.from(app).notify(ID, notification)
         scheduleCancel(dismissMs)
 
-        val tips = when {
-            !liveUpdateBuildSupport ->
-                "已发送状态通知（本机 framework 不完整，无法走 Google Live Update API）"
-            canPromote == false ->
-                "系统未允许本应用「实时更新」，请在通知设置中开启"
-            promotable == false ->
-                "通知可能未满足 Live Update 特征；仍已发送状态通知"
-            canPromote == true || promotable == true ->
-                "已请求 Live Update（状态栏芯片取决于系统与厂商实现）"
+        val parts = mutableListOf<String>()
+        when {
+            liveUpdateBuildSupport && canPromote == false ->
+                parts += "未开「实时更新/流体云」权限"
+            liveUpdateBuildSupport && (canPromote == true || promotable != false) ->
+                parts += "已请求流体云/Live Update"
+            liveUpdateBuildSupport ->
+                parts += "已发 Live Update 通知"
             else ->
-                "已发送实时/状态通知"
+                parts += "本机无完整 Live Update API"
+        }
+        if (hyperOs) {
+            parts += "已附超级岛参数(protocol=$focusProtocol" +
+                (canShowFocus?.let { ",focus=$it" } ?: "") + ")"
+        } else {
+            parts += "已附超级岛参数(非 HyperOS 会被忽略)"
         }
         return PostResult(
             posted = true,
             canPostPromoted = canPromote,
             hasPromotableCharacteristics = promotable,
-            message = tips,
+            message = parts.joinToString("；"),
         )
     }
 
@@ -220,26 +235,29 @@ object ActionTipNotif {
         )
         val chipText = text.take(6).ifBlank { "触发" }
         val durationSec = (dismissMs / 1000L).toInt().coerceAtLeast(MIN_DURATION_SEC)
-        return if (liveUpdateBuildSupport) {
+        // 优先走 Live Update（ColorOS 流体云）；失败则降级为普通 ongoing
+        val notification = if (liveUpdateBuildSupport) {
             try {
-                buildLiveUpdateSafe(text, chipText, contentIntent, durationSec)
+                buildLiveUpdateLayer(text, chipText, contentIntent)
             } catch (t: Throwable) {
                 LogUtils.d("ActionTipNotif live build failed: ${t.message}")
-                buildCompat(text, contentIntent, durationSec)
+                buildBaseOngoing(text, contentIntent)
             }
         } else {
-            buildCompat(text, contentIntent, durationSec)
+            buildBaseOngoing(text, contentIntent)
         }
+        // 始终附加 HyperOS 超级岛 extras（ColorOS 忽略未知字段）
+        attachHyperOsIslandExtras(notification, text, chipText, durationSec)
+        return notification
     }
 
     /**
-     * 仅通过反射调用 Live Update Builder API，避免 OEM 缺方法时直接 linkage 崩溃。
+     * ColorOS / AOSP Live Update 层：ProgressStyle + promoted ongoing。
      */
-    private fun buildLiveUpdateSafe(
+    private fun buildLiveUpdateLayer(
         text: String,
         chipText: String,
         contentIntent: PendingIntent,
-        durationSec: Int,
     ): Notification {
         val builder = Notification.Builder(app, NotifChannel.Action.id)
             .setSmallIcon(R.drawable.ic_status)
@@ -258,7 +276,6 @@ object ActionTipNotif {
 
         val notification = builder.build()
         notification.extras.putBoolean(EXTRA_REQUEST_PROMOTED_ONGOING, true)
-        attachOemIslandExtras(notification, text, chipText, durationSec)
         return notification
     }
 
@@ -312,7 +329,8 @@ object ActionTipNotif {
         }
     }
 
-    private fun buildCompat(text: String, contentIntent: PendingIntent, durationSec: Int): Notification {
+    /** 无 Live Update API 时的基线 ongoing 通知（仍可挂超级岛 extras） */
+    private fun buildBaseOngoing(text: String, contentIntent: PendingIntent): Notification {
         val builder = NotificationCompat.Builder(app, NotifChannel.Action.id)
             .setSmallIcon(R.drawable.ic_status)
             .setContentTitle(META.appName)
@@ -326,58 +344,105 @@ object ActionTipNotif {
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
         val notification = builder.build()
         notification.extras.putBoolean(EXTRA_REQUEST_PROMOTED_ONGOING, true)
-        attachOemIslandExtras(notification, text, text.take(6), durationSec)
         return notification
     }
 
-    private fun attachOemIslandExtras(
+    /**
+     * HyperOS 超级岛层：官方摘要态模板 + miui.focus.pics。
+     * 在 ColorOS 上写入无害，系统会忽略。
+     */
+    private fun attachHyperOsIslandExtras(
         notification: Notification,
         text: String,
         chipText: String,
         durationSec: Int,
     ) {
         try {
+            val shortTitle = chipText.take(4).ifBlank { "触发" }
+            val shortContent = text.take(4).ifBlank { shortTitle }
             val timeoutMin = maxOf(1, (durationSec + 59) / 60)
-            val island = JSONObject()
+            val textInfo = JSONObject()
+                .put("title", shortTitle)
+                .put("content", shortContent)
+                .put("useHighLight", false)
+            val picInfo = JSONObject()
+                .put("type", 1)
+                .put("pic", "miui.focus.pic_imageText")
+            val paramV2 = JSONObject()
+                .put("protocol", 1)
                 .put("business", "gkd_action_tip")
                 .put("timeout", timeoutMin)
                 .put("updatable", true)
-                .put("islandFirstFloat", false)
-                .put("enableFloat", false)
+                .put("islandFirstFloat", true)
+                .put("enableFloat", true)
+                .put("ticker", text.take(16).ifBlank { shortTitle })
+                .put("tickerPic", "miui.focus.pic_ticker")
+                .put("aodTitle", shortTitle)
+                .put("aodPic", "miui.focus.pic_aod")
                 .put(
                     "param_island",
                     JSONObject()
+                        .put("islandProperty", 1)
                         .put("islandTimeout", durationSec)
                         .put(
-                            "smallIslandArea",
-                            JSONObject().put(
-                                "textPicArea",
-                                JSONObject()
-                                    .put("title", chipText)
-                                    .put("desc", text.take(32)),
-                            ),
+                            "bigIslandArea",
+                            JSONObject()
+                                .put(
+                                    "imageTextInfoLeft",
+                                    JSONObject()
+                                        .put("type", 1)
+                                        .put("picInfo", picInfo)
+                                        .put("textInfo", textInfo),
+                                )
+                                .put(
+                                    "textInfo",
+                                    JSONObject()
+                                        .put("title", shortContent)
+                                        .put("content", text.take(8)),
+                                ),
                         )
                         .put(
-                            "bigIslandArea",
-                            JSONObject().put(
-                                "textArea",
-                                JSONObject()
-                                    .put("title", META.appName)
-                                    .put("content", text),
-                            ),
+                            "smallIslandArea",
+                            JSONObject().put("picInfo", picInfo),
                         ),
                 )
                 .put(
                     "baseInfo",
                     JSONObject()
                         .put("title", META.appName)
-                        .put("content", text),
+                        .put("content", text.take(32))
+                        .put("type", 1),
                 )
+            val pics = Bundle().apply {
+                val icon = Icon.createWithResource(app, R.drawable.ic_status)
+                putParcelable("miui.focus.pic_imageText", icon)
+                putParcelable("miui.focus.pic_ticker", icon)
+                putParcelable("miui.focus.pic_aod", icon)
+            }
+            notification.extras.putBundle("miui.focus.pics", pics)
             notification.extras.putString(
                 "miui.focus.param",
-                JSONObject().put("param_v2", island).toString(),
+                JSONObject().put("param_v2", paramV2).toString(),
             )
-        } catch (_: Exception) {
+        } catch (t: Exception) {
+            LogUtils.d("ActionTipNotif island extras skip: ${t.message}")
         }
+    }
+
+    /** HyperOS：1=OS1 / 2=OS2 / 3=OS3；0=不支持或未知 */
+    private fun readFocusProtocolVersion(): Int = try {
+        Settings.System.getInt(app.contentResolver, "notification_focus_protocol", 0)
+    } catch (_: Throwable) {
+        0
+    }
+
+    /** HyperOS：是否允许展示焦点通知 / 超级岛 */
+    private fun readCanShowFocus(): Boolean? = try {
+        val uri = Uri.parse("content://miui.statusbar.notification.public")
+        val extras = Bundle().apply { putString("package", app.packageName) }
+        val bundle = app.contentResolver.call(uri, "canShowFocus", null, extras)
+        bundle?.getBoolean("canShowFocus", false)
+    } catch (_: Throwable) {
+        null
     }
 }

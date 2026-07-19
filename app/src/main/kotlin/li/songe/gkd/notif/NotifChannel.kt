@@ -25,7 +25,7 @@ sealed class NotifChannel(
     data object Action : NotifChannel(
         id = "2",
         name = "触发提示",
-        desc = "规则触发时的实时状态通知，可显示在状态栏芯片或厂商灵动岛",
+        desc = "规则触发时的实时状态通知：ColorOS 流体云 / HyperOS 超级岛",
         importance = NotificationManager.IMPORTANCE_DEFAULT,
     )
 }

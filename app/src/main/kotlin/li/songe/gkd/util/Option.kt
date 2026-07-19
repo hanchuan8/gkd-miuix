@@ -168,7 +168,7 @@ sealed class ActionTipStyleOption(
 
     data object Overlay : ActionTipStyleOption(0, "悬浮窗提示", "悬浮窗")
     data object SystemToast : ActionTipStyleOption(1, "系统 Toast", "Toast")
-    data object LiveNotif : ActionTipStyleOption(2, "实时通知（灵动岛）", "实时通知")
+    data object LiveNotif : ActionTipStyleOption(2, "实时通知（流体云/超级岛）", "实时通知")
 
     companion object {
         val objects by lazy { listOf(Overlay, SystemToast, LiveNotif) }

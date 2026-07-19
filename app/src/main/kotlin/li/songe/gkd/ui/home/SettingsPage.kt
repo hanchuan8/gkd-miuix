@@ -498,7 +498,10 @@ fun useSettingsPage(): ScaffoldExt {
                                     title = "提示样式说明",
                                     text = "• 悬浮窗：无障碍/悬浮窗绘制，兼容最好\n" +
                                         "• 系统 Toast：受系统频率限制，高触发规则可能不显示\n" +
-                                        "• 实时通知：Android 16 Google Live Updates（状态栏芯片）；需系统允许本应用「实时更新」。一加/ColorOS 等可能改名或裁剪该能力。小米超级岛另需厂商白名单。",
+                                        "• 实时通知：同一条通知同时适配\n" +
+                                        "  - ColorOS：Google Live Update → 流体云\n" +
+                                        "  - HyperOS：miui.focus 模板 → 超级岛\n" +
+                                        "  请在系统通知设置中开启「实时更新/流体云」或焦点通知相关开关。",
                                 )
                             },
                         )

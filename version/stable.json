@@ -1,10 +1,15 @@
 {
-  "versionCode": 94,
-  "versionName": "1.2.0",
-  "changelog": "v1.2.0\n\n- 去掉设置分组外的分类小字标题（如「服务」「数据概览」「快捷入口」等），更贴合 MIUIX 观感",
-  "downloadUrl": "https://github.com/hanchuan8/gkd-miuix/releases/download/v1.2.0/gkd-x-v1.2.0.apk",
-  "fileSize": 3473891,
+  "versionCode": 95,
+  "versionName": "1.2.1",
+  "changelog": "v1.2.1\n\n- 实时通知同时适配 ColorOS 流体云与 HyperOS 超级岛\n- 超级岛参数改为官方摘要态模板（含 miui.focus.pics）",
+  "downloadUrl": "https://github.com/hanchuan8/gkd-miuix/releases/download/v1.2.1/gkd-x-v1.2.1.apk",
+  "fileSize": 1,
   "versionLogs": [
+    {
+      "name": "1.2.1",
+      "code": 95,
+      "desc": "- 实时通知同时适配 ColorOS 流体云与 HyperOS 超级岛\n- 超级岛参数改为官方摘要态模板（含 miui.focus.pics）"
+    },
     {
       "name": "1.2.0",
       "code": 94,
