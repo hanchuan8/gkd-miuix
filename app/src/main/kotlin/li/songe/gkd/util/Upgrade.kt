@@ -110,14 +110,19 @@ class UpdateStatus(val scope: CoroutineScope) {
 
     private suspend fun fetchNewVersion(): NewVersion {
         var lastError: Throwable? = null
+        var best: NewVersion? = null
         for (url in updateCheckUrls(UPDATE_URL)) {
             try {
-                return client.get(url).body()
+                val version = client.get(url).body<NewVersion>()
+                // CDN 可能成功返回过期 JSON；多源取更高 versionCode，避免脏缓存挡住更新
+                if (best == null || version.versionCode > best.versionCode) {
+                    best = version
+                }
             } catch (e: Throwable) {
                 lastError = e
             }
         }
-        throw lastError ?: Exception("检查更新失败")
+        return best ?: throw lastError ?: Exception("检查更新失败")
     }
 
     private fun startDownload(newVersion: NewVersion) {
