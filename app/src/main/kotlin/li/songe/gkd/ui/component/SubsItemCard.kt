@@ -89,7 +89,7 @@ fun SubsItemCard(
     Card(
         onClick = onClick,
         modifier = modifier
-            .padding(16.dp, 4.dp)
+            .padding(horizontal = 12.dp, vertical = 4.dp)
             .semantics {
                 stateDescription = if (isSelectedMode) {
                     if (isSelected) "已选中" else "未选中"

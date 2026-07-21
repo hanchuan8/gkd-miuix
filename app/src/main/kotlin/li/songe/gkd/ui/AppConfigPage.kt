@@ -1,6 +1,6 @@
 package li.songe.gkd.ui
 
-import androidx.compose.foundation.shape.RoundedCornerShape
+import top.yukonga.miuix.kmp.squircle.squircleClip
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -32,7 +32,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
@@ -276,7 +275,7 @@ fun AppConfigPage(route: AppConfigRoute) {
                         modifier = Modifier
                             .background(MiuixTheme.colorScheme.surface)
                             .padding(horizontal = 8.dp)
-                            .clip(RoundedCornerShape(4.dp))
+                            .squircleClip(cornerRadius = 4.dp)
                             .clickable(onClick = throttle {
                                 mainVm.navigatePage(
                                     SubsAppGroupListRoute(

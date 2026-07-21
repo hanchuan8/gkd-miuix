@@ -9,7 +9,7 @@ import android.webkit.WebView
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.material3.CircularProgressIndicator
+import li.songe.gkd.ui.component.AppCircularProgressIndicator
 import li.songe.gkd.ui.component.PerfDropdownMenu
 import li.songe.gkd.ui.component.PerfDropdownMenuItem
 import androidx.compose.runtime.Composable
@@ -71,7 +71,7 @@ fun WebViewPage(route: WebViewRoute) {
         },
         actions = {
             if (loading) {
-                CircularProgressIndicator(
+                AppCircularProgressIndicator(
                     modifier = Modifier.iconTextSize(),
                 )
             }

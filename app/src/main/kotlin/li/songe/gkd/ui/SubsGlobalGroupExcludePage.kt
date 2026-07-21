@@ -27,7 +27,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
@@ -48,6 +47,7 @@ import li.songe.gkd.ui.component.AnimationFloatingActionButton
 import li.songe.gkd.ui.component.AppBarTextField
 import li.songe.gkd.ui.component.AppIcon
 import li.songe.gkd.ui.component.AppNameText
+import li.songe.gkd.ui.component.AppPageScaffold
 import li.songe.gkd.ui.component.EmptyText
 import li.songe.gkd.ui.component.InnerDisableSwitch
 import li.songe.gkd.ui.component.MenuGroupCard
@@ -77,8 +77,6 @@ import li.songe.gkd.util.systemAppsFlow
 import li.songe.gkd.util.throttle
 import li.songe.gkd.util.toast
 import top.yukonga.miuix.kmp.basic.IconButton
-import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
-import top.yukonga.miuix.kmp.basic.Scaffold
 
 @Serializable
 data class SubsGlobalGroupExcludeRoute(
@@ -114,7 +112,6 @@ fun SubsGlobalGroupExcludePage(route: SubsGlobalGroupExcludeRoute) {
         vm.resetKey,
         canScroll = { !editable }
     )
-    val miuixScrollBehavior = MiuixScrollBehavior()
 
     BackHandler(editable, onBack = throttle(vm.viewModelScope.launchAsFn {
         context.justHideSoftInput()
@@ -127,8 +124,7 @@ fun SubsGlobalGroupExcludePage(route: SubsGlobalGroupExcludeRoute) {
         editable = false
     }))
 
-    Scaffold(
-        modifier = Modifier.nestedScroll(miuixScrollBehavior.nestedScrollConnection),
+    AppPageScaffold(
         topBar = {
             if (showSearchBar) {
                 BackHandler {
@@ -140,7 +136,7 @@ fun SubsGlobalGroupExcludePage(route: SubsGlobalGroupExcludeRoute) {
             PerfTopAppBar(
                 titleText = if (showSearchBar) "" else group.name,
                 subtitle = if (showSearchBar) "" else "编辑禁用",
-                miuixScrollBehavior = miuixScrollBehavior,
+                miuixScrollBehavior = scrollBehavior,
                 canScroll = !editable,
                 navigationIcon = {
                     IconButton(onClick = throttle(vm.viewModelScope.launchAsFn {
@@ -267,7 +263,7 @@ fun SubsGlobalGroupExcludePage(route: SubsGlobalGroupExcludeRoute) {
         },
         floatingActionButton = {
             AnimationFloatingActionButton(
-                visible = !editable && miuixScrollBehavior.isFullVisible,
+                visible = !editable && scrollBehavior.isFullVisible,
                 onClick = {
                     editable = !editable
                 },

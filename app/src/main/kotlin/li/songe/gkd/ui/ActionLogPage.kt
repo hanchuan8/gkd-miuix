@@ -61,6 +61,7 @@ import li.songe.gkd.util.throttle
 import li.songe.gkd.util.toast
 import top.yukonga.miuix.kmp.basic.Card
 import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.squircle.squircleClip
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Serializable
@@ -180,7 +181,7 @@ private fun ActionLogCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = if (lastItem == null) 0.dp else 4.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .squircleClip(cornerRadius = 8.dp)
                     .clickable(onClick = throttle {
                         mainVm.navigatePage(AppConfigRoute(appId = actionLog.appId))
                     })

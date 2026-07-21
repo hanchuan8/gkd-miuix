@@ -19,7 +19,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
@@ -31,6 +30,7 @@ import li.songe.gkd.db.DbSet
 import li.songe.gkd.ui.component.AnimatedIconButton
 import li.songe.gkd.ui.component.AnimationFloatingActionButton
 import li.songe.gkd.ui.component.AppBarTextField
+import li.songe.gkd.ui.component.AppPageScaffold
 import li.songe.gkd.ui.component.EmptyText
 import li.songe.gkd.ui.component.MenuGroupCard
 import li.songe.gkd.ui.component.MenuItemCheckbox
@@ -52,8 +52,6 @@ import li.songe.gkd.util.AppSortOption
 import li.songe.gkd.util.LOCAL_SUBS_IDS
 import li.songe.gkd.util.launchAsFn
 import li.songe.gkd.util.throttle
-import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
-import top.yukonga.miuix.kmp.basic.Scaffold
 
 @Serializable
 data class SubsAppListRoute(val subsItemId: Long) : NavKey
@@ -78,11 +76,9 @@ fun SubsAppListPage(route: SubsAppListRoute) {
     val listState = useListScrollState(
         vm.resetKey,
     )
-    val miuixScrollBehavior = MiuixScrollBehavior()
     var expanded by remember { mutableStateOf(false) }
 
-    Scaffold(
-        modifier = Modifier.nestedScroll(miuixScrollBehavior.nestedScrollConnection),
+    AppPageScaffold(
         topBar = {
             if (showSearchBar) {
                 BackHandler {
@@ -96,7 +92,7 @@ fun SubsAppListPage(route: SubsAppListRoute) {
             PerfTopAppBar(
                 titleText = if (showSearchBar) "" else subsName,
                 subtitle = if (showSearchBar) "" else "应用规则",
-                miuixScrollBehavior = miuixScrollBehavior,
+                miuixScrollBehavior = scrollBehavior,
                 navigationIcon = {
                     PerfIconButton(
                         imageVector = PerfIcon.ArrowBack,
@@ -117,62 +113,63 @@ fun SubsAppListPage(route: SubsAppListRoute) {
                     }
                 },
                 actions = {
-                AnimatedIconButton(
-                    onClick = {
-                        if (showSearchBar) {
-                            if (vm.searchStrFlow.value.isEmpty()) {
-                                showSearchBar = false
+                    AnimatedIconButton(
+                        onClick = {
+                            if (showSearchBar) {
+                                if (vm.searchStrFlow.value.isEmpty()) {
+                                    showSearchBar = false
+                                } else {
+                                    vm.searchStrFlow.value = ""
+                                }
                             } else {
-                                vm.searchStrFlow.value = ""
+                                showSearchBar = true
                             }
-                        } else {
-                            showSearchBar = true
-                        }
-                    },
-                    id = R.drawable.ic_anim_search_close,
-                    atEnd = showSearchBar,
-                )
-                PerfIconButton(
-                    imageVector = PerfIcon.Sort,
-                    onClick = {
-                        expanded = true
-                    },
-                )
-                Box(
-                    modifier = Modifier.wrapContentSize(Alignment.TopStart)
-                ) {
-                    PerfDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                        MenuGroupCard(inTop = true, title = "排序") {
-                            var sortType by vm.sortTypeFlow.asMutableState()
-                            AppSortOption.objects.forEach { option ->
-                                MenuItemRadioButton(
-                                    text = option.label,
-                                    selected = sortType == option,
-                                    onClick = { sortType = option },
-                                )
+                        },
+                        id = R.drawable.ic_anim_search_close,
+                        atEnd = showSearchBar,
+                    )
+                    PerfIconButton(
+                        imageVector = PerfIcon.Sort,
+                        onClick = {
+                            expanded = true
+                        },
+                    )
+                    Box(
+                        modifier = Modifier.wrapContentSize(Alignment.TopStart)
+                    ) {
+                        PerfDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                            MenuGroupCard(inTop = true, title = "排序") {
+                                var sortType by vm.sortTypeFlow.asMutableState()
+                                AppSortOption.objects.forEach { option ->
+                                    MenuItemRadioButton(
+                                        text = option.label,
+                                        selected = sortType == option,
+                                        onClick = { sortType = option },
+                                    )
+                                }
                             }
-                        }
-                        MenuGroupCard(title = "分组") {
-                            var appGroupType by vm.appGroupTypeFlow.asMutableState()
-                            AppGroupOption.allObjects.forEach { option ->
-                                val newValue = option.invert(appGroupType)
+                            MenuGroupCard(title = "分组") {
+                                var appGroupType by vm.appGroupTypeFlow.asMutableState()
+                                AppGroupOption.allObjects.forEach { option ->
+                                    val newValue = option.invert(appGroupType)
+                                    MenuItemCheckbox(
+                                        enabled = newValue != 0,
+                                        text = option.label,
+                                        checked = option.include(appGroupType),
+                                        onClick = { appGroupType = newValue },
+                                    )
+                                }
+                            }
+                            MenuGroupCard(title = "筛选") {
                                 MenuItemCheckbox(
-                                    enabled = newValue != 0,
-                                    text = option.label,
-                                    checked = option.include(appGroupType),
-                                    onClick = { appGroupType = newValue },
+                                    text = "白名单",
+                                    stateFlow = vm.showBlockAppFlow,
                                 )
                             }
-                        }
-                        MenuGroupCard(title = "筛选") {
-                            MenuItemCheckbox(
-                                text = "白名单",
-                                stateFlow = vm.showBlockAppFlow,
-                            )
                         }
                     }
-                }
-            })
+                },
+            )
         },
         floatingActionButton = {
             AnimationFloatingActionButton(

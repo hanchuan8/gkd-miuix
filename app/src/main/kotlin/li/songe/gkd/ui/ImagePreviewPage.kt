@@ -22,7 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.CircularProgressIndicator
+import li.songe.gkd.ui.component.AppCircularProgressIndicator
 import top.yukonga.miuix.kmp.basic.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -367,7 +367,7 @@ private fun UriImage(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
-                    CircularProgressIndicator(modifier = Modifier.size(40.dp))
+                    AppCircularProgressIndicator(modifier = Modifier.size(40.dp))
                     phaseText?.let { text ->
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(

@@ -171,7 +171,7 @@ fun RuleGroupCard(
     val contentColor = MiuixTheme.colorScheme.onSurfaceContainer
     Card(
         modifier = modifier
-            .padding(horizontal = 8.dp)
+            .padding(horizontal = 12.dp)
             .semantics {
                 onClick(label = "打开规则详情弹窗", action = null)
                 onLongClick(label = "进入多选模式", action = null)

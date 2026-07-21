@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import li.songe.gkd.ui.component.PerfAlertDialog
-import androidx.compose.material3.LinearProgressIndicator
+import li.songe.gkd.ui.component.AppLinearProgressIndicator
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.ButtonDefaults
 import top.yukonga.miuix.kmp.basic.TextButton
@@ -226,7 +226,7 @@ class UpdateStatus(val scope: CoroutineScope) {
                     PerfAlertDialog(
                         title = { Text(text = "下载中") },
                         text = {
-                            LinearProgressIndicator(
+                            AppLinearProgressIndicator(
                                 progress = { downloadStatusVal.progress },
                             )
                         },

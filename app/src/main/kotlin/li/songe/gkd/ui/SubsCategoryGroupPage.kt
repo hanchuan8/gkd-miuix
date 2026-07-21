@@ -1,6 +1,6 @@
 package li.songe.gkd.ui
 
-import androidx.compose.foundation.shape.RoundedCornerShape
+import top.yukonga.miuix.kmp.squircle.squircleClip
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,7 +24,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -242,7 +241,7 @@ fun SubsCategoryGroupPage(route: SubsCategoryGroupRoute) {
                         modifier = Modifier
                             .background(MiuixTheme.colorScheme.surface)
                             .padding(horizontal = 8.dp)
-                            .clip(RoundedCornerShape(4.dp))
+                            .squircleClip(cornerRadius = 4.dp)
                             .clickable(onClick = throttle {
                                 mainVm.navigatePage(
                                     SubsAppGroupListRoute(

@@ -1,8 +1,6 @@
 package li.songe.gkd.ui.home
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -160,6 +158,12 @@ fun HomePage() {
     }
 }
 
+/**
+ * miuix Scaffold 会把 content 全屏铺在顶栏下方（place 0,0），顶栏叠在上面。
+ * 顶栏必须走 Scaffold.topBar + textureBlur；内容区只挂**一个** layerBackdrop。
+ * 切勿 Column 上下拆开顶栏，否则 backdrop 采不到顶栏区域，看起来像实色遮罩；
+ * 也勿给每个 Pager 页各挂 layerBackdrop，多节点抢同一 LayerBackdrop 会让底栏偶发变黑。
+ */
 @Composable
 private fun HomePagerContent(
     pages: Array<ScaffoldExt?>,
@@ -178,12 +182,11 @@ private fun HomePagerContent(
         val isCurrentPage = index == settledPage
         if (isCurrentPage || !lightPager) {
             val page = pages[index] ?: return@HorizontalPager
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .then(page.modifier),
             ) {
-                page.topBar()
                 page.content(contentPadding)
             }
         }
@@ -212,6 +215,7 @@ private fun MiuixDockedNavScaffold(
         ),
     )
     val selectedIndex = homePager.selectedPage
+    val settledPage = homePager.pagerState.settledPage
 
     CompositionLocalProvider(LocalLayerBackdrop provides backdrop) {
         MiuixScaffold(
@@ -221,26 +225,29 @@ private fun MiuixDockedNavScaffold(
                     compositingStrategy = CompositingStrategy.Offscreen
                 }
             },
-            topBar = {},
+            topBar = {
+                MiuixBlurredTopBar(
+                    backdrop = backdrop,
+                    blurActive = blurActive,
+                ) {
+                    pages.getOrNull(settledPage)?.topBar?.invoke()
+                }
+            },
             floatingActionButton = {
-                pages.getOrNull(homePager.pagerState.settledPage)?.floatingActionButton?.invoke()
+                pages.getOrNull(settledPage)?.floatingActionButton?.invoke()
             },
             bottomBar = {
                 Box(
-                    modifier = Modifier
-                        .then(
-                            if (blurActive) {
-                                Modifier.textureBlur(
-                                    backdrop = backdrop,
-                                    shape = RectangleShape,
-                                    blurRadius = 25f,
-                                    colors = blurColors,
-                                )
-                            } else {
-                                Modifier
-                            }
+                    modifier = if (blurActive) {
+                        Modifier.textureBlur(
+                            backdrop = backdrop,
+                            shape = RectangleShape,
+                            blurRadius = 25f,
+                            colors = blurColors,
                         )
-                        .background(barColor),
+                    } else {
+                        Modifier
+                    },
                 ) {
                     MiuixNavigationBar(color = barColor) {
                         navItems.forEachIndexed { index, item ->
@@ -255,19 +262,17 @@ private fun MiuixDockedNavScaffold(
                 }
             },
             content = { padding ->
-                CompositionLocalProvider(LocalMiuixBlurActive provides false) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .then(if (blurActive) Modifier.layerBackdrop(backdrop) else Modifier),
-                    ) {
-                        HomePagerContent(
-                            pages = pages,
-                            homePager = homePager,
-                            contentPadding = padding,
-                            lightPager = lightPager,
-                        )
-                    }
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .then(if (blurActive) Modifier.layerBackdrop(backdrop) else Modifier),
+                ) {
+                    HomePagerContent(
+                        pages = pages,
+                        homePager = homePager,
+                        contentPadding = padding,
+                        lightPager = lightPager,
+                    )
                 }
             },
         )
@@ -314,30 +319,36 @@ private fun MiuixFloatingNavScaffold(
                     compositingStrategy = CompositingStrategy.Offscreen
                 }
             },
-            topBar = {},
+            topBar = {
+                MiuixBlurredTopBar(
+                    backdrop = backdrop,
+                    blurActive = blurActive,
+                ) {
+                    pages.getOrNull(settled)?.topBar?.invoke()
+                }
+            },
             floatingActionButton = {
                 Box(modifier = Modifier.padding(bottom = floatingBarBody)) {
                     pages.getOrNull(settled)?.floatingActionButton?.invoke()
                 }
             },
             bottomBar = {},
-            content = { _ ->
+            content = { padding ->
                 Box(modifier = Modifier.fillMaxSize()) {
-                    CompositionLocalProvider(LocalMiuixBlurActive provides false) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .then(if (blurActive) Modifier.layerBackdrop(backdrop) else Modifier),
-                        ) {
-                            HomePagerContent(
-                                pages = pages,
-                                homePager = homePager,
-                                contentPadding = PaddingValues(
-                                    bottom = listBottomSpace,
-                                ),
-                                lightPager = lightPager,
-                            )
-                        }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .then(if (blurActive) Modifier.layerBackdrop(backdrop) else Modifier),
+                    ) {
+                        HomePagerContent(
+                            pages = pages,
+                            homePager = homePager,
+                            contentPadding = PaddingValues(
+                                top = padding.calculateTopPadding(),
+                                bottom = listBottomSpace,
+                            ),
+                            lightPager = lightPager,
+                        )
                     }
                     Box(
                         modifier = Modifier
@@ -390,8 +401,7 @@ private fun MiuixFloatingNavScaffold(
     }
 }
 
-// Keep for potential reuse; blur overlay top bar when not using in-pager titles.
-@Suppress("unused")
+/** Mishka BlurredBar：textureBlur + 透明 TopAppBar（经 LocalMiuixBlurActive）。 */
 @Composable
 private fun MiuixBlurredTopBar(
     backdrop: LayerBackdrop,

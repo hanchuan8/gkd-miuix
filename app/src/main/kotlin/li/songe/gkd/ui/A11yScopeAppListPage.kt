@@ -18,7 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
@@ -33,6 +32,7 @@ import li.songe.gkd.ui.component.AnimatedIconButton
 import li.songe.gkd.ui.component.AnimationFloatingActionButton
 import li.songe.gkd.ui.component.AppBarTextField
 import li.songe.gkd.ui.component.AppCheckBoxCard
+import li.songe.gkd.ui.component.AppPageScaffold
 import li.songe.gkd.ui.component.EmptyText
 import li.songe.gkd.ui.component.MenuGroupCard
 import li.songe.gkd.ui.component.MenuItemCheckbox
@@ -59,8 +59,6 @@ import li.songe.gkd.util.switchItem
 import li.songe.gkd.util.throttle
 import li.songe.gkd.util.toast
 import top.yukonga.miuix.kmp.basic.IconButton
-import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
-import top.yukonga.miuix.kmp.basic.Scaffold
 
 @Serializable
 data object A11YScopeAppListRoute : NavKey
@@ -76,7 +74,6 @@ fun A11yScopeAppListPage() {
     var showSearchBar by vm.showSearchBarFlow.asMutableState()
     var editable by vm.editableFlow.asMutableState()
     val listState = useListScrollState(vm.resetKey, canScroll = { !editable })
-    val miuixScrollBehavior = MiuixScrollBehavior()
     BackHandler(editable, vm.viewModelScope.launchAsFn {
         context.justHideSoftInput()
         if (vm.textChanged) {
@@ -87,8 +84,7 @@ fun A11yScopeAppListPage() {
         }
         editable = false
     })
-    Scaffold(
-        modifier = Modifier.nestedScroll(miuixScrollBehavior.nestedScrollConnection),
+    AppPageScaffold(
         topBar = {
             if (showSearchBar) {
                 BackHandler {
@@ -100,7 +96,7 @@ fun A11yScopeAppListPage() {
             val firstShowSearchBar = remember { showSearchBar }
             PerfTopAppBar(
                 titleText = if (showSearchBar) "" else "局部无障碍",
-                miuixScrollBehavior = miuixScrollBehavior,
+                miuixScrollBehavior = scrollBehavior,
                 canScroll = !editable && !store.blockA11yAppListFollowMatch,
                 navigationIcon = {
                     IconButton(
@@ -215,7 +211,7 @@ fun A11yScopeAppListPage() {
         },
         floatingActionButton = {
             AnimationFloatingActionButton(
-                visible = !editable && miuixScrollBehavior.isFullVisible,
+                visible = !editable && scrollBehavior.isFullVisible,
                 onClickLabel = "进入文本编辑模式",
                 onClick = {
                     editable = !editable

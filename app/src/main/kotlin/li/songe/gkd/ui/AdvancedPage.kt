@@ -1,6 +1,6 @@
 package li.songe.gkd.ui
 
-import androidx.compose.foundation.shape.RoundedCornerShape
+import top.yukonga.miuix.kmp.squircle.squircleClip
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import android.app.Activity
 import android.content.Context
@@ -22,7 +22,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import li.songe.gkd.ui.component.PerfAlertDialog
-import androidx.compose.material3.CircularProgressIndicator
+import li.songe.gkd.ui.component.AppCircularProgressIndicator
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import top.yukonga.miuix.kmp.basic.Text
@@ -36,7 +36,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -313,7 +312,7 @@ fun AdvancedPage() {
                     )
                     PerfIcon(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
+                            .squircleClip(cornerRadius = 4.dp)
                             .clickable(onClickLabel = "打开 Shizuku 状态弹窗", onClick = throttle {
                                 showShizukuState = true
                             })
@@ -342,7 +341,7 @@ fun AdvancedPage() {
                     checked = store.enableShizuku,
                     suffixIcon = {
                         if (updateBinderMutex.state.collectAsState().value) {
-                            CircularProgressIndicator(
+                            AppCircularProgressIndicator(
                                 modifier = Modifier
                                     .size(20.dp),
                             )

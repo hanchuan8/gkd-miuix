@@ -48,7 +48,6 @@ import li.songe.gkd.ui.component.updateDialogOptions
 import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.ui.style.EmptyHeight
 import li.songe.gkd.ui.style.cardHorizontalPadding
-import li.songe.gkd.ui.style.itemHorizontalPadding
 import li.songe.gkd.ui.style.lineHeightDp
 import li.songe.gkd.util.AndroidTarget
 import li.songe.gkd.util.AutomatorModeOption
@@ -95,7 +94,7 @@ fun AuthA11yPage() {
         ) {
             Card(
                 modifier = Modifier
-                    .padding(horizontal = itemHorizontalPadding)
+                    .padding(horizontal = cardHorizontalPadding)
                     .fillMaxWidth(),
                 onClick = throttle { mainVm.updateAutomatorMode(AutomatorModeOption.A11yMode) },
                 colors = CardDefaults.defaultColors(
@@ -239,7 +238,7 @@ fun AuthA11yPage() {
             Spacer(modifier = Modifier.height(12.dp))
             Card(
                 modifier = Modifier
-                    .padding(horizontal = itemHorizontalPadding)
+                    .padding(horizontal = cardHorizontalPadding)
                     .fillMaxWidth(),
                 onClick = throttle { mainVm.updateAutomatorMode(AutomatorModeOption.AutomationMode) },
                 colors = CardDefaults.defaultColors(

@@ -1,6 +1,5 @@
 package li.songe.gkd.ui.home
 
-import androidx.compose.foundation.shape.RoundedCornerShape
 import android.view.KeyEvent
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedVisibility
@@ -107,6 +106,7 @@ import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Scaffold
 import top.yukonga.miuix.kmp.basic.TextButton
 import top.yukonga.miuix.kmp.basic.TextField
+import top.yukonga.miuix.kmp.squircle.squircleClip
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 @Composable
@@ -799,7 +799,7 @@ private fun RequiredTextItem(
 ) {
     Row(
         modifier = Modifier
-            .clip(RoundedCornerShape(4.dp))
+            .squircleClip(cornerRadius = 4.dp)
             .run {
                 if (onClick != null) {
                     clickable(

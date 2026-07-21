@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -16,6 +17,7 @@ import li.songe.gkd.store.storeFlow
 import li.songe.gkd.ui.share.LocalLayerBackdrop
 import li.songe.gkd.ui.share.LocalMiuixBlurActive
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
+import top.yukonga.miuix.kmp.basic.ScrollBehavior
 import top.yukonga.miuix.kmp.basic.TopAppBar as MiuixTopAppBar
 import top.yukonga.miuix.kmp.blur.BlendColorEntry
 import top.yukonga.miuix.kmp.blur.BlurColors
@@ -25,6 +27,12 @@ import top.yukonga.miuix.kmp.blur.rememberLayerBackdrop
 import top.yukonga.miuix.kmp.blur.textureBlur
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.basic.Scaffold as MiuixScaffold
+
+/** 二级页顶栏 / FAB 作用域：共享 [scrollBehavior] 与毛玻璃透明色。 */
+class AppPageBarScope(
+    val scrollBehavior: ScrollBehavior,
+    val barColor: Color,
+)
 
 /**
  * 二级页壳：MIUIX TopAppBar + MiuixScrollBehavior + BlurredBar（surface @ 0.87）。
@@ -41,11 +49,44 @@ fun AppPageScaffold(
     floatingActionButton: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit,
 ) {
+    AppPageScaffold(
+        modifier = modifier,
+        enableContentBlur = enableContentBlur,
+        floatingActionButton = { floatingActionButton() },
+        topBar = {
+            MiuixTopAppBar(
+                title = title,
+                color = barColor,
+                navigationIcon = navigationIcon,
+                actions = actions,
+                scrollBehavior = scrollBehavior,
+                defaultWindowInsetsPadding = true,
+            )
+        },
+        content = content,
+    )
+}
+
+/**
+ * 自定义顶栏二级页壳。在 [topBar] / [floatingActionButton] 中通过 [AppPageBarScope]
+ * 使用统一的 [AppPageBarScope.scrollBehavior] 与 [AppPageBarScope.barColor]，避免手写模糊逻辑。
+ */
+@Composable
+fun AppPageScaffold(
+    modifier: Modifier = Modifier,
+    enableContentBlur: Boolean = true,
+    floatingActionButton: @Composable AppPageBarScope.() -> Unit = {},
+    topBar: @Composable AppPageBarScope.() -> Unit,
+    content: @Composable (PaddingValues) -> Unit,
+) {
     val store by storeFlow.collectAsState()
     val blurActive = enableContentBlur && store.enableMiuixBlur && isRuntimeShaderSupported()
     val surfaceColor = MiuixTheme.colorScheme.surface
     val barColor = if (blurActive) Color.Transparent else surfaceColor
     val scrollBehavior = MiuixScrollBehavior()
+    val barScope = remember(scrollBehavior, barColor) {
+        AppPageBarScope(scrollBehavior = scrollBehavior, barColor = barColor)
+    }
     val backdrop = rememberLayerBackdrop {
         drawRect(surfaceColor)
         drawContent()
@@ -72,18 +113,11 @@ fun AppPageScaffold(
                             Modifier
                         },
                     ) {
-                        MiuixTopAppBar(
-                            title = title,
-                            color = barColor,
-                            navigationIcon = navigationIcon,
-                            actions = actions,
-                            scrollBehavior = scrollBehavior,
-                            defaultWindowInsetsPadding = true,
-                        )
+                        barScope.topBar()
                     }
                 }
             },
-            floatingActionButton = floatingActionButton,
+            floatingActionButton = { barScope.floatingActionButton() },
             content = { padding ->
                 if (blurActive) {
                     Box(

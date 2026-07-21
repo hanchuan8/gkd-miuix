@@ -2,7 +2,7 @@ package li.songe.gkd.ui.component
 
 import androidx.compose.animation.AnimatedContent
 import li.songe.gkd.ui.component.PerfAlertDialog
-import androidx.compose.material3.LinearProgressIndicator
+import li.songe.gkd.ui.component.AppLinearProgressIndicator
 import top.yukonga.miuix.kmp.basic.Text
 import top.yukonga.miuix.kmp.basic.TextButton
 import androidx.compose.runtime.Composable
@@ -89,11 +89,11 @@ class UploadOptions(
                         val showExactProgress = 0f < status.progress && status.progress < 1f
                         AnimatedContent(showExactProgress) { showExact ->
                             if (showExact) {
-                                LinearProgressIndicator(
+                                AppLinearProgressIndicator(
                                     progress = { status.progress },
                                 )
                             } else {
-                                LinearProgressIndicator()
+                                AppLinearProgressIndicator()
                             }
                         }
                     },

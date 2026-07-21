@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircleOutline
@@ -30,8 +29,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.onClick
@@ -72,9 +69,9 @@ import li.songe.gkd.ui.component.SettingItem
 import li.songe.gkd.ui.component.TextSwitch
 import li.songe.gkd.ui.component.textSize
 import li.songe.gkd.ui.component.useScrollBehaviorState
-import li.songe.gkd.ui.share.LocalDarkTheme
 import li.songe.gkd.ui.share.LocalMainViewModel
 import li.songe.gkd.ui.style.EmptyHeight
+import li.songe.gkd.ui.style.StatusColors
 import li.songe.gkd.util.HOME_PAGE_URL
 import li.songe.gkd.util.ShortUrlSet
 import li.songe.gkd.util.appInfoMapFlow
@@ -88,6 +85,7 @@ import top.yukonga.miuix.kmp.basic.CardDefaults
 import top.yukonga.miuix.kmp.basic.Icon
 import top.yukonga.miuix.kmp.basic.MiuixScrollBehavior
 import top.yukonga.miuix.kmp.basic.Text
+import top.yukonga.miuix.kmp.squircle.squircleClip
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import top.yukonga.miuix.kmp.utils.PressFeedbackType
 
@@ -295,7 +293,6 @@ private fun StatusOverviewSection() {
     val a11yRunning by A11yService.isRunning.collectAsState()
     val writeSecureSettings by writeSecureSettingsState.stateFlow.collectAsState()
     val appOpsRestricted by appOpsRestrictedFlow.collectAsState()
-    val darkTheme = LocalDarkTheme.current
     val colorScheme = MiuixTheme.colorScheme
     val subsCount = subsItemsFlow.collectAsState().value.size
     val appCount = appInfoMapFlow.collectAsState().value.size
@@ -303,6 +300,7 @@ private fun StatusOverviewSection() {
     val useA11y = store.useA11y || actualA11yScopeAppList.contains(topAppIdFlow.collectAsState().value)
     val uiAutomation = uiAutomationFlow.collectAsState().value
     val serviceRunning = if (useA11y) a11yRunning else uiAutomation != null
+    val statusColors = StatusColors.serviceStatus(running = serviceRunning)
 
     val statusTitle = if (serviceRunning) {
         "运行中"
@@ -326,11 +324,7 @@ private fun StatusOverviewSection() {
                 .weight(1f)
                 .fillMaxHeight(),
             colors = CardDefaults.defaultColors(
-                color = when {
-                    !serviceRunning -> if (darkTheme) Color(0xFF3A2424) else Color(0xFFFDECEC)
-                    darkTheme -> Color(0xFF1A3825)
-                    else -> Color(0xFFDFFAE4)
-                },
+                color = statusColors.container,
             ),
             onClick = throttle {
                 mainVm.navigatePage(AuthA11yRoute)
@@ -352,11 +346,7 @@ private fun StatusOverviewSection() {
                         } else {
                             Icons.Rounded.ErrorOutline
                         },
-                        tint = if (serviceRunning) {
-                            Color(0xFF36D167)
-                        } else {
-                            colorScheme.error.copy(alpha = 0.75f)
-                        },
+                        tint = statusColors.icon,
                         contentDescription = null,
                     )
                 }
@@ -487,7 +477,7 @@ private fun ServerStatusSection() {
             if (latestRecordDesc != null) {
                 Row(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
+                        .squircleClip(cornerRadius = 8.dp)
                         .clickable(onClickLabel = "前往应用的规则汇总页面", onClick = throttle {
                             latestRecord?.let {
                                 mainVm.navigatePage(

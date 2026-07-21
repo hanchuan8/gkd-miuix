@@ -1,6 +1,7 @@
 package li.songe.gkd.ui
 
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
+import top.yukonga.miuix.kmp.squircle.squircleClip
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
@@ -17,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import top.yukonga.miuix.kmp.basic.Text
@@ -148,7 +148,7 @@ private fun ActivityLogCard(
             Row(
                 modifier = Modifier
                     .padding(start = itemHorizontalPadding / 4)
-                    .clip(RoundedCornerShape(4.dp))
+                    .squircleClip(cornerRadius = 4.dp)
                     .clickable(onClick = throttle {
                         mainVm.navigatePage(
                             AppConfigRoute(
