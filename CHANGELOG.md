@@ -1,5 +1,10 @@
 # 更新内容
 
+## v1.2.4
+
+- 修复悬浮底栏液态玻璃边缘折射/反射错位（padding 须在 blur 之前）
+- 更新检测优先 GitHub raw，多源比对最高 versionCode，避免 CDN 脏缓存挡住更新
+
 ## v1.2.3
 
 - 按 MIUIX 规范收敛界面：二级页统一 AppPageScaffold 毛玻璃顶栏

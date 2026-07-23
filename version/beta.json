@@ -1,10 +1,15 @@
 {
-  "versionCode": 97,
-  "versionName": "1.2.3",
-  "changelog": "v1.2.3（测试通道）\n\n- 按 MIUIX 规范收敛界面：二级页统一 AppPageScaffold 毛玻璃顶栏\n- 修复首页顶栏模糊不生效；底栏避免多 backdrop 抢采样变黑\n- 服务状态语义色、进度指示统一封装；卡片 12.dp 与可点色块 squircle",
-  "downloadUrl": "https://github.com/hanchuan8/gkd-miuix/releases/download/v1.2.3/gkd-x-v1.2.3.apk",
+  "versionCode": 98,
+  "versionName": "1.2.4",
+  "changelog": "v1.2.4（测试通道）\n\n- 修复悬浮底栏液态玻璃边缘折射/反射错位（padding 须在 blur 之前）\n- 更新检测优先 GitHub raw，多源比对最高 versionCode，避免 CDN 脏缓存挡住更新",
+  "downloadUrl": "https://github.com/hanchuan8/gkd-miuix/releases/download/v1.2.4/gkd-x-v1.2.4.apk",
   "fileSize": 3473851,
   "versionLogs": [
+    {
+      "name": "1.2.4",
+      "code": 98,
+      "desc": "- 修复悬浮底栏液态玻璃边缘折射/反射错位（padding 须在 blur 之前）\n- 更新检测优先 GitHub raw，多源比对最高 versionCode，避免 CDN 脏缓存挡住更新"
+    },
     {
       "name": "1.2.3",
       "code": 97,
